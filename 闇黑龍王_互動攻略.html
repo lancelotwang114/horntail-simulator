@@ -1,0 +1,110 @@
+<meta charset="utf-8">
+<title>闇黑龍王 互動攻略 — 檢視</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:-apple-system,"Microsoft JhengHei","PingFang TC",sans-serif;
+    background:linear-gradient(180deg,#081320,#0e2138); color:#e6f1ff; min-height:100vh; padding:16px; }
+  h1 { text-align:center; color:#7dd3fc; font-size:23px; }
+  .sub { text-align:center; color:#94a3b8; font-size:13px; margin:3px 0 12px; }
+  .wrap { max-width:1000px; margin:0 auto; }
+  .rule { background:#3b1418; border:1px solid #fca5a5; color:#fecaca; border-radius:10px;
+    padding:9px 14px; font-size:13.5px; text-align:center; margin-bottom:12px; font-weight:700; }
+  .arena { position:relative; width:100%; aspect-ratio:1661/1077; border-radius:14px;
+    overflow:hidden; border:2px solid #1e3a5f; box-shadow:inset 0 0 50px #000a;
+    background-image:url("default.jpg"); background-size:cover; background-position:center; }
+  .mark { position:absolute; transform:translate(-50%,-50%); aspect-ratio:1; z-index:5; pointer-events:none; }
+  .mark.O { border:4px solid #fde047; border-radius:50%; background:transparent;
+    box-shadow:0 0 18px 3px #fde04788, inset 0 0 12px #fde04766; animation:pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.65} 50%{opacity:1} }
+  .mark.X svg { width:100%; height:100%; display:block; filter:drop-shadow(0 2px 2px #000); }
+  .zone { position:absolute; transform:translate(-50%,-50%); border-radius:10px; z-index:3;
+    display:flex; align-items:flex-start; justify-content:center; padding-top:3px;
+    font-size:11px; font-weight:800; pointer-events:none; }
+  .zone.green { background:#22c55e2e; border:2px dashed #22c55e; color:#bbf7d0; }
+  .zone.red   { background:#ef44442e; border:2px dashed #ef4444; color:#fecaca; }
+  .zone.smoke { background:#a78bfa2e; border:2px dashed #a78bfa; color:#e9d5ff; z-index:4; }
+  .role { position:absolute; transform:translate(-50%,-50%); z-index:8; text-align:center;
+    transition:left .9s cubic-bezier(.5,.05,.3,1), top .9s cubic-bezier(.5,.05,.3,1), opacity .4s; }
+  .role img { width:38px; height:38px; border-radius:8px; display:block; border:2px solid #fff; box-shadow:0 2px 7px #000b; }
+  .role .nm { font-size:10px; font-weight:800; color:#fff; margin-top:1px; text-shadow:0 1px 2px #000,0 0 4px #000; }
+  @media(max-width:640px){ .role img{width:30px;height:30px} .role .nm{font-size:9px} }
+  .ctrl { display:flex; gap:8px; justify-content:center; margin:12px 0 6px; flex-wrap:wrap; }
+  button { background:#13314f; color:#cfe8ff; border:1px solid #335f8c; border-radius:9px;
+    padding:8px 14px; font-size:13.5px; font-weight:700; cursor:pointer; }
+  button:hover{ background:#1c456c; }
+  button.primary{ background:#0ea5b7; border-color:#0ea5b7; color:#031a1f; }
+  .steps{ display:flex; gap:7px; justify-content:center; flex-wrap:wrap; }
+  .dot{ width:14px; height:14px; border-radius:50%; background:#33597f; cursor:pointer; display:flex;
+    align-items:center; justify-content:center; font-size:9px; color:#0a1626; font-weight:900;}
+  .dot.on{ background:#38bdf8; box-shadow:0 0 8px #38bdf8; }
+  .panel{ background:#10243b; border:1px solid #1e3a5f; border-radius:12px; padding:14px 16px; margin-top:14px; }
+  .ptitle{ font-size:18px; font-weight:800; margin-bottom:8px; }
+  .ptitle .tag{ font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; margin-left:8px; }
+  .panel ul{ list-style:none; }
+  .panel li{ font-size:14px; line-height:1.7; padding-left:18px; position:relative; color:#dbeafe; }
+  .panel li::before{ content:"›"; position:absolute; left:2px; color:#38bdf8; font-weight:900; }
+  .panel li.warn::before{ content:"!"; color:#fca5a5; }
+  .panel li.safe::before{ content:"✓"; color:#86efac; }
+  .legend{ text-align:center; font-size:12px; color:#9fb6cf; margin-top:10px; }
+  .legend b{ color:#fecaca; } .legend i{ color:#bbf7d0; font-style:normal; }
+</style>
+<div class="wrap">
+  <h1>闇黑龍王 互動攻略</h1>
+  <div class="sub">按「下一階段」看各職移動 ・ 〇＝目標　✕＝已斷</div>
+  <div class="rule">⚠ 鐵則：尾巴一定要「最先」斷！其他部位先斷 = 挑戰失敗　｜　肚子最後才打</div>
+  <div class="arena" id="arena"></div>
+  <div class="legend"><b>紅框＝危險區（固定）</b>　｜　<i>綠框＝安全區（固定）</i>　｜　紫框＝下煙區</div>
+  <div class="ctrl">
+    <button id="prev">◀ 上一階段</button>
+    <button class="primary" id="play">▶ 自動播放</button>
+    <button id="next">下一階段 ▶</button>
+  </div>
+  <div class="steps" id="steps"></div>
+  <div class="panel"><div class="ptitle" id="ptitle"></div><ul id="plist"></ul></div>
+</div>
+<script>
+const ROLES = {
+  hero:{f:'職業/英雄.jpg', n:'英雄'}, long:{f:'職業/龍騎.jpg', n:'龍騎'},
+  dao :{f:'職業/刀賊.jpg', n:'刀賊'}, biao:{f:'職業/標賊.jpg', n:'標賊'},
+  nu  :{f:'職業/弩手.jpg', n:'弩手'}, qiang:{f:'職業/槍神.jpg', n:'槍神'},
+  gong:{f:'職業/箭神.jpg', n:'箭神'}, fa:{f:'職業/冰雷.jpg', n:'冰雷'},
+  quan:{f:'職業/拳霸.jpg', n:'拳霸'},
+  hero2:{f:'職業/英雄.jpg', n:'英雄2'}, fa2:{f:'職業/冰雷.jpg', n:'冰雷2'}, long2:{f:'職業/龍騎.jpg', n:'龍騎2'},
+};
+const GLOBAL_ZONES = [{"kind": "green", "x": 87.2, "y": 47.4, "w": 9.5, "h": 80, "t": "安全區"}, {"kind": "red", "x": 33.2, "y": 47.9, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 16.7, "y": 47.7, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 70.8, "y": 47.3, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 84.8, "y": 48.5, "w": 7.9, "h": 77.6, "t": "危險區"}];
+const STAGES = [{"name": "開場 ・ 就定位", "color": "#64748b", "marks": [{"kind": "O", "x": 68.6, "y": 82.6, "r": 3.3}], "zones": [], "pos": {"hero": [49.4, 84.5], "quan": [6.8, 82.2], "dao": [10.1, 57.8], "biao": [69.5, 25.2], "long": [49.3, 76], "fa": [26.2, 32.5], "gong": [7.3, 38], "nu": [74.8, 52], "qiang": [89.1, 84.5], "hero2": [49.4, 67.6], "fa2": [30.1, 32.5], "long2": [26.2, 84.1]}, "notes": [["", "各職就初始定位，準備開始攻略"], ["warn", "紅框＝危險區、綠框＝安全區（固定鎖定，每階段顯示）"]]}, {"name": "第一階段 ・ 開始攻略（斷尾）", "color": "#14b8a6", "marks": [{"kind": "O", "x": 69.2, "y": 83.6, "r": 3.5}], "zones": [{"kind": "smoke", "x": 69, "y": 80.2, "w": 21.9, "h": 14.3, "t": "刀賊下煙"}], "pos": {"hero": [76.1, 74.7], "long": [66.3, 74.4], "dao": [64, 85], "quan": [61.8, 74.8], "fa": [24.1, 83.3], "gong": [59.6, 84.7], "biao": [78.9, 83.4], "nu": [73.6, 51.7], "qiang": [91.6, 83.8], "hero2": [75, 83.2], "fa2": [28.8, 31.6], "long2": [71.3, 74.2]}, "notes": [["", "開始攻略 → 就定位 → 目標：斷尾"], ["", "約 27 分：刀賊到尾巴下放煙（30 秒 × 2）"], ["", "除弩手、槍神外，全員集火尾巴"], ["warn", "60% 尾未斷 → 弩手留手（改必殺狙擊）"], ["warn", "煙快散撤離：越遠先走、肚子最晚走"], ["", "記錄斷尾當下王血量 %，斷尾後英雄轉左側"]]}, {"name": "第二階段 ・ 左手", "color": "#3b82f6", "marks": [{"kind": "O", "x": 38.1, "y": 55.2, "r": 3}, {"kind": "X", "x": 67, "y": 81, "r": 4}], "zones": [], "pos": {"hero": [23, 63.3], "long": [53.6, 83.1], "dao": [5.8, 56.9], "quan": [3.2, 82.6], "fa": [24.3, 83.6], "gong": [5.7, 36.8], "biao": [66.6, 25.8], "nu": [78, 52], "qiang": [90.4, 84.5], "hero2": [49, 82.8], "fa2": [27.5, 31.6], "long2": [49, 74.8]}, "notes": [["", "英雄換到左側，集火左手"]]}, {"name": "第三階段 ・ 左頭 + 中頭", "color": "#a855f7", "marks": [{"kind": "O", "x": 38, "y": 39.9, "r": 6}, {"kind": "O", "x": 49.6, "y": 34.5, "r": 6}, {"kind": "X", "x": 69.4, "y": 81.8, "r": 4.3}, {"kind": "X", "x": 38, "y": 55.6, "r": 3.2}], "zones": [], "pos": {"hero": [47.6, 82.7], "long": [52.4, 83.1], "dao": [6.7, 57.4], "fa": [25.5, 32.4], "quan": [3.7, 83.4], "gong": [6.7, 36.9], "biao": [65.5, 26.4], "nu": [74.1, 52], "qiang": [90.9, 83.8], "hero2": [30, 32.2], "fa2": [24.2, 82.4], "long2": [47.6, 74.4]}, "notes": [["", "集火左龍頭 + 中龍頭（不打左手、尾巴）"], ["warn", "中頭 50% → 黑鎖；主 CALL 計算黑鎖次數"], ["warn", "黑鎖時：標賊、弩手往右站一點（保險牌）"], ["", "打完左頭 → 等黑鎖後換位：刀賊先右、弩手左"]]}, {"name": "第四階段 ・ 右手 → 右頭 + 中頭", "color": "#f97316", "marks": [{"kind": "O", "x": 60.8, "y": 55.8, "r": 3.8}, {"kind": "O", "x": 60.8, "y": 39.4, "r": 3}, {"kind": "O", "x": 49.1, "y": 35.9, "r": 4.1}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 37.6, "y": 55.1, "r": 4}, {"kind": "X", "x": 36.7, "y": 39.1, "r": 4}], "zones": [{"kind": "smoke", "x": 77, "y": 50, "w": 16, "h": 22, "t": "下煙區"}], "pos": {"hero": [67.2, 42.2], "long": [46.1, 72.2], "dao": [72.6, 50.4], "fa": [28.3, 30.4], "quan": [3.2, 82], "gong": [6.5, 37.3], "biao": [85.2, 31], "nu": [13.5, 58.6], "qiang": [89.1, 84.4], "hero2": [67.2, 35.2], "fa2": [21.5, 81.7], "long2": [46.4, 82.2]}, "notes": [["", "集火右手（站位含右頭、中頭）"], ["warn", "右頭 < 50% 狂暴 → 下煙（王右側 / 綠圈）"], ["warn", "標賊怕電 → 直接往右跳閃，安全再回"], ["", "備案1：英雄+刀賊原地打　・　電完右手通常掉 → 續打右頭+中頭"]]}, {"name": "第五階段 ・ 狂暴下煙（集火右頭+中頭+右手）", "color": "#e11d48", "marks": [{"kind": "O", "x": 60.8, "y": 39.4, "r": 3.2}, {"kind": "O", "x": 49.1, "y": 35.9, "r": 4.1}, {"kind": "O", "x": 60.8, "y": 55.8, "r": 3.8}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 37.6, "y": 55.1, "r": 4}, {"kind": "X", "x": 36.7, "y": 39.1, "r": 4}], "zones": [{"kind": "smoke", "x": 71.8, "y": 45.9, "w": 18.1, "h": 18, "t": "下煙區"}], "pos": {"hero": [68, 42.4], "long": [67.2, 50.7], "dao": [72.6, 50.4], "fa": [28.3, 30.4], "quan": [3.2, 82], "gong": [6.5, 37.3], "biao": [77.6, 42.4], "nu": [13.5, 58.6], "qiang": [89.1, 84.4], "hero2": [72.6, 41.9], "fa2": [21.5, 81.7], "long2": [77.8, 51.1]}, "notes": [["", "狂暴下煙，集火右頭、中頭、右手"], ["warn", "狂暴電擊期：怕電的退到最右綠框安全區"], ["safe", "電完繼續集火，把右頭+中頭+右手清掉"]]}, {"name": "最後階段 ・ 收尾雙腿", "color": "#22c55e", "marks": [{"kind": "O", "x": 36.8, "y": 73.4, "r": 6}, {"kind": "O", "x": 60.8, "y": 73.6, "r": 6}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 41, "y": 53, "r": 4}, {"kind": "X", "x": 39, "y": 33, "r": 4}, {"kind": "X", "x": 59, "y": 53, "r": 4}, {"kind": "X", "x": 61, "y": 33, "r": 4}, {"kind": "X", "x": 50, "y": 29, "r": 4}], "zones": [], "pos": {"hero": [69.5, 52.2], "quan": [3.6, 83.8], "gong": [7.2, 36.9], "long": [48.8, 83.7], "dao": [73.7, 52.6], "fa": [23.2, 82.9], "biao": [86.5, 32], "nu": [17.3, 57.4], "qiang": [93.9, 83.3], "hero2": [73.4, 44.8], "fa2": [27.4, 31.6], "long2": [48.9, 74.9]}, "notes": [["", "英雄 → 右下處打"], ["", "拳霸 → 左上"], ["", "箭神（弓手）→ 左下打左腿"], ["safe", "雙腿收尾，肚子留到最後"]]}];
+let cur=0, playing=false, timer=null;
+const arena=document.getElementById('arena');
+const roleEls={};
+for(const k in ROLES){ const r=ROLES[k]; const d=document.createElement('div'); d.className='role';
+  d.innerHTML='<img src="'+r.f+'" alt="'+r.n+'"><div class="nm">'+r.n+'</div>';
+  d.style.left='50%'; d.style.top='50%'; d.style.opacity=0; arena.appendChild(d); roleEls[k]=d; }
+let markEls=[], zoneEls=[];
+const Xsvg='<svg viewBox="0 0 10 10"><line x1="1.5" y1="1.5" x2="8.5" y2="8.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round"/><line x1="8.5" y1="1.5" x2="1.5" y2="8.5" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const stepsEl=document.getElementById('steps');
+STAGES.forEach((s,i)=>{ const d=document.createElement('div'); d.className='dot'; d.textContent=i; d.onclick=()=>go(i); stepsEl.appendChild(d); });
+function render(i){
+  const st=STAGES[i];
+  for(const k in roleEls){ const e=roleEls[k];
+    if(st.pos[k]){ e.style.left=st.pos[k][0]+'%'; e.style.top=st.pos[k][1]+'%'; e.style.opacity=1; } else e.style.opacity=0; }
+  markEls.forEach(m=>m.remove()); markEls=[];
+  (st.marks||[]).forEach(m=>{ const d=document.createElement('div'); d.className='mark '+m.kind;
+    d.style.left=m.x+'%'; d.style.top=m.y+'%'; d.style.width=(m.r*2)+'%';
+    if(m.kind==='X') d.innerHTML=Xsvg; arena.appendChild(d); markEls.push(d); });
+  zoneEls.forEach(z=>z.remove()); zoneEls=[];
+  (st.zones||[]).concat(GLOBAL_ZONES).forEach(z=>{ const d=document.createElement('div'); d.className='zone '+z.kind;
+    d.style.left=z.x+'%'; d.style.top=z.y+'%'; d.style.width=z.w+'%'; d.style.height=z.h+'%';
+    d.innerHTML='<span>'+(z.t||'')+'</span>'; arena.appendChild(d); zoneEls.push(d); });
+  document.getElementById('ptitle').innerHTML = st.name + '<span class="tag" style="background:'+st.color+'33;color:'+st.color+'">'+i+' / '+(STAGES.length-1)+'</span>';
+  const ul=document.getElementById('plist'); ul.innerHTML='';
+  st.notes.forEach(n=>{ const li=document.createElement('li'); if(n[0])li.className=n[0]; li.textContent=n[1]; ul.appendChild(li); });
+  [...stepsEl.children].forEach((d,j)=>d.classList.toggle('on',j===i));
+}
+function go(i){ cur=(i+STAGES.length)%STAGES.length; render(cur); }
+document.getElementById('next').onclick=()=>go(cur+1);
+document.getElementById('prev').onclick=()=>go(cur-1);
+const playBtn=document.getElementById('play');
+playBtn.onclick=()=>{ playing=!playing; playBtn.textContent=playing?'⏸ 暫停':'▶ 自動播放';
+  if(playing){ timer=setInterval(()=>{ if(cur===STAGES.length-1){playing=false;playBtn.textContent='▶ 自動播放';clearInterval(timer);return;} go(cur+1); },2400);} else clearInterval(timer); };
+go(0);
+</script>
