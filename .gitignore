@@ -19,7 +19,11 @@ build/
 # ===== 本機暫存 / 草稿（依需要保留） =====
 *-archive/
 *.7z
-horntail_stages.json   # 編輯器匯出的暫存範本，非網站必要
+
+# ===== 我的私人範本（不上傳；放這裡的都不會進公開 repo） =====
+範本/
+horntail_stages.json
+*.template.json
 
 # ===== 不上傳的素材（本機保留，不進 repo） =====
 # 對話殘留的未使用圖片
