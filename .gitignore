@@ -24,6 +24,7 @@ build/
 範本/
 horntail_stages.json
 *.template.json
+闇黑龍王_互動攻略_自用.html
 
 # ===== 不上傳的素材（本機保留，不進 repo） =====
 # 對話殘留的未使用圖片

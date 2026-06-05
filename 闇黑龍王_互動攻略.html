@@ -6,7 +6,10 @@
     background:linear-gradient(180deg,#081320,#0e2138); color:#e6f1ff; min-height:100vh; padding:16px; }
   h1 { text-align:center; color:#7dd3fc; font-size:23px; }
   .sub { text-align:center; color:#94a3b8; font-size:13px; margin:3px 0 12px; }
-  .wrap { max-width:1000px; margin:0 auto; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .main{ display:flex; gap:14px; align-items:stretch; }
+  .arena-col{ flex:1 1 auto; min-width:0; }
+  @media(max-width:780px){ .main{ flex-direction:column; } }
   .rule { background:#3b1418; border:1px solid #fca5a5; color:#fecaca; border-radius:10px;
     padding:9px 14px; font-size:13.5px; text-align:center; margin-bottom:12px; font-weight:700; }
   .arena { position:relative; width:100%; aspect-ratio:1661/1077; border-radius:14px;
@@ -22,11 +25,12 @@
     font-size:11px; font-weight:800; pointer-events:none; }
   .zone.green { background:#22c55e2e; border:2px dashed #22c55e; color:#bbf7d0; }
   .zone.red   { background:#ef44442e; border:2px dashed #ef4444; color:#fecaca; }
-  .zone.smoke { background:#9aa3ad45; border:2px dashed #cbd5e1; color:#f8fafc; z-index:4; }
+  .zone.smoke { background:#12141bb0; border:2px dashed #475569; color:#f8fafc; z-index:4; }
   .zone span{ color:#fff; font-weight:800; text-shadow:0 1px 2px #000,0 0 3px #000; background:rgba(0,0,0,.34); padding:1px 6px; border-radius:5px; }
   .atext{ position:absolute; transform:translate(-50%,-50%); color:#fff; font-weight:800; text-shadow:0 1px 2px #000,0 0 5px #000; white-space:nowrap; z-index:7; pointer-events:none; text-align:center; }
   .atext.editable{ pointer-events:auto; cursor:grab; }
   .atext.sel{ outline:2px dashed #fff; outline-offset:3px; border-radius:4px; }
+  .rsz{ position:absolute; right:-8px; bottom:-8px; width:15px; height:15px; background:#fff; border:2px solid #38bdf8; border-radius:3px; cursor:nwse-resize; z-index:20; pointer-events:auto; box-shadow:0 1px 3px #000a; }
   .role { position:absolute; transform:translate(-50%,-50%); z-index:8; text-align:center;
     transition:left .9s cubic-bezier(.5,.05,.3,1), top .9s cubic-bezier(.5,.05,.3,1), opacity .4s; }
   .role img { width:38px; height:38px; border-radius:8px; display:block; border:2px solid #fff; box-shadow:0 2px 7px #000b; }
@@ -36,13 +40,14 @@
   button { background:#13314f; color:#cfe8ff; border:1px solid #335f8c; border-radius:9px;
     padding:8px 14px; font-size:13.5px; font-weight:700; cursor:pointer; }
   button:hover{ background:#1c456c; }
-  button.primary{ background:#0ea5b7; border-color:#0ea5b7; color:#031a1f; }
-  #editBtn{ margin-left:10px; border-color:#0ea5b7; color:#7dd3fc; }
+  button.primary{ background:#38bdf8; border-color:#38bdf8; color:#04263b; }
+  #editBtn{ margin-left:10px; border-color:#38bdf8; color:#7dd3fc; }
   .steps{ display:flex; gap:7px; justify-content:center; flex-wrap:wrap; }
   .dot{ width:14px; height:14px; border-radius:50%; background:#33597f; cursor:pointer; display:flex;
     align-items:center; justify-content:center; font-size:9px; color:#0a1626; font-weight:900;}
   .dot.on{ background:#38bdf8; box-shadow:0 0 8px #38bdf8; }
-  .panel{ background:#10243b; border:1px solid #1e3a5f; border-radius:12px; padding:14px 16px; margin-top:14px; }
+  .panel{ background:#10243b; border:1px solid #1f3b5c; border-radius:12px; padding:14px 16px; flex:0 0 300px; overflow:auto; }
+  @media(max-width:780px){ .panel{ flex:1 1 auto; width:100%; } }
   .ptitle{ font-size:18px; font-weight:800; margin-bottom:8px; }
   .ptitle .tag{ font-size:12px; font-weight:700; padding:2px 9px; border-radius:10px; margin-left:8px; }
   .panel ul{ list-style:none; }
@@ -69,7 +74,7 @@
     padding:12px; background:#0c1f33; border:1px solid #1e3a5f; border-radius:12px; }
   .grp{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; background:#10243b; padding:7px 9px; border-radius:9px; }
   .chip{ font-size:12px; padding:3px 9px; border-radius:14px; border:1px solid #335f8c; background:#13314f; color:#9fb6cf; cursor:pointer; }
-  .chip.on{ background:#0ea5b7; color:#031a1f; border-color:#0ea5b7; }
+  .chip.on{ background:#38bdf8; color:#04263b; border-color:#38bdf8; }
   .chip .rm{ margin-left:5px; color:#fca5a5; cursor:pointer; font-weight:900; }
   .role.sel{ outline:3px solid #fff; outline-offset:2px; border-radius:9px; }
   .role .lbl{ font-size:9px; font-weight:800; color:#fde047; text-shadow:0 1px 2px #000,0 0 4px #000; line-height:1.1; }
@@ -86,8 +91,13 @@
   <h1>闇黑龍王 互動攻略</h1>
   <div class="sub">按「下一階段」看各職移動 ・ 〇＝目標　✕＝已斷</div>
   <div class="rule">⚠ 鐵則：尾巴一定要「最先」斷！其他部位先斷 = 挑戰失敗</div>
-  <div class="arena" id="arena"></div>
-  <div class="legend"><b>紅框＝危險區（固定）</b>　｜　<i>綠框＝安全區（固定）</i>　｜　灰框＝下煙區</div>
+  <div class="main">
+    <div class="arena-col">
+      <div class="arena" id="arena"></div>
+      <div class="legend"><b>紅框＝危險區（固定）</b>　｜　<i>綠框＝安全區（固定）</i>　｜　灰框＝下煙區</div>
+    </div>
+    <div class="panel"><div class="ptitle" id="ptitle"></div><ul id="plist"></ul></div>
+  </div>
   <div class="ctrl">
     <button id="prev">◀ 上一階段</button>
     <button id="next">下一階段 ▶</button>
@@ -97,7 +107,6 @@
   <div class="kbd-hint">鍵盤：<kbd>←</kbd> <kbd>→</kbd> 切換階段　・　編輯時 <kbd>方向鍵</kbd> 微調、<kbd>Esc</kbd> 退出</div>
   <div id="editor"></div>
   <input type="file" id="importFile" accept="application/json" style="display:none">
-  <div class="panel"><div class="ptitle" id="ptitle"></div><ul id="plist"></ul></div>
 </div>
 <div id="toast"></div>
 <script>
@@ -110,7 +119,7 @@ const ROLES = {
   bishop:{f:'職業/主教.jpg', n:'主教'}, fp:{f:'職業/火毒.jpg', n:'火毒'}, pala:{f:'職業/聖騎士.jpg', n:'聖騎士'},
 };
 const GLOBAL_ZONES = [{"kind": "green", "x": 87.2, "y": 47.4, "w": 9.5, "h": 80, "t": "安全區"}, {"kind": "red", "x": 33.2, "y": 47.9, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 16.7, "y": 47.7, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 70.8, "y": 47.3, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 84.8, "y": 48.5, "w": 7.9, "h": 77.6, "t": "危險區"}];
-const STAGES = [{"name": "開場 ・ 就定位", "color": "#64748b", "marks": [{"kind": "O", "x": 68.6, "y": 82.6, "r": 3.3}], "zones": [], "pos": {"hero": [49.4, 84.5], "quan": [6.8, 82.2], "dao": [10.1, 57.8], "biao": [69.5, 25.2], "long": [49.3, 76], "fa": [26.2, 32.5], "gong": [7.3, 38], "nu": [74.8, 52], "qiang": [89.1, 84.5], "hero2": [49.4, 67.6], "fa2": [30.1, 32.5], "long2": [26.2, 84.1]}, "notes": [["", "各職就初始定位，準備開始攻略"], ["warn", "紅框＝危險區、綠框＝安全區（固定鎖定，每階段顯示）"]]}, {"name": "第一階段 ・ 開始攻略（斷尾）", "color": "#14b8a6", "marks": [{"kind": "O", "x": 69.2, "y": 83.6, "r": 3.5}], "zones": [{"kind": "smoke", "x": 69, "y": 80.2, "w": 21.9, "h": 14.3, "t": "刀賊下煙"}], "pos": {"hero": [76.1, 74.7], "long": [66.3, 74.4], "dao": [64, 85], "quan": [61.8, 74.8], "fa": [24.1, 83.3], "gong": [59.6, 84.7], "biao": [78.9, 83.4], "nu": [73.6, 51.7], "qiang": [91.6, 83.8], "hero2": [75, 83.2], "fa2": [28.8, 31.6], "long2": [71.3, 74.2]}, "notes": [["", "開始攻略 → 就定位 → 目標：斷尾"], ["", "約 27 分：刀賊到尾巴下放煙（30 秒 × 2）"], ["", "除弩手、槍神外，全員集火尾巴"], ["warn", "60% 尾未斷 → 弩手留手（改必殺狙擊）"], ["warn", "煙快散撤離：越遠先走、肚子最晚走"], ["", "記錄斷尾當下王血量 %，斷尾後英雄轉左側"]]}, {"name": "第二階段 ・ 左手", "color": "#3b82f6", "marks": [{"kind": "O", "x": 38.1, "y": 55.2, "r": 3}, {"kind": "X", "x": 67, "y": 81, "r": 4}], "zones": [], "pos": {"hero": [23, 63.3], "long": [53.6, 83.1], "dao": [5.8, 56.9], "quan": [3.2, 82.6], "fa": [24.3, 83.6], "gong": [5.7, 36.8], "biao": [66.6, 25.8], "nu": [78, 52], "qiang": [90.4, 84.5], "hero2": [49, 82.8], "fa2": [27.5, 31.6], "long2": [49, 74.8]}, "notes": [["", "英雄換到左側，集火左手"]]}, {"name": "第三階段 ・ 左頭 + 中頭", "color": "#a855f7", "marks": [{"kind": "O", "x": 38, "y": 39.9, "r": 6}, {"kind": "O", "x": 49.6, "y": 34.5, "r": 6}, {"kind": "X", "x": 69.4, "y": 81.8, "r": 4.3}, {"kind": "X", "x": 38, "y": 55.6, "r": 3.2}], "zones": [], "pos": {"hero": [47.6, 82.7], "long": [52.4, 83.1], "dao": [6.7, 57.4], "fa": [25.5, 32.4], "quan": [3.7, 83.4], "gong": [6.7, 36.9], "biao": [65.5, 26.4], "nu": [74.1, 52], "qiang": [90.9, 83.8], "hero2": [30, 32.2], "fa2": [24.2, 82.4], "long2": [47.6, 74.4]}, "notes": [["", "集火左龍頭 + 中龍頭（不打左手、尾巴）"], ["warn", "中頭 50% → 黑鎖；主 CALL 計算黑鎖次數"], ["warn", "黑鎖時：標賊、弩手往右站一點（保險牌）"], ["", "打完左頭 → 等黑鎖後換位：刀賊先右、弩手左"]]}, {"name": "第四階段 ・ 右手 → 右頭 + 中頭", "color": "#f97316", "marks": [{"kind": "O", "x": 60.8, "y": 55.8, "r": 3.8}, {"kind": "O", "x": 60.8, "y": 39.4, "r": 3}, {"kind": "O", "x": 49.1, "y": 35.9, "r": 4.1}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 37.6, "y": 55.1, "r": 4}, {"kind": "X", "x": 36.7, "y": 39.1, "r": 4}], "zones": [{"kind": "smoke", "x": 77, "y": 50, "w": 16, "h": 22, "t": "下煙區"}], "pos": {"hero": [67.2, 42.2], "long": [46.1, 72.2], "dao": [72.6, 50.4], "fa": [28.3, 30.4], "quan": [3.2, 82], "gong": [6.5, 37.3], "biao": [85.2, 31], "nu": [13.5, 58.6], "qiang": [89.1, 84.4], "hero2": [67.2, 35.2], "fa2": [21.5, 81.7], "long2": [46.4, 82.2]}, "notes": [["", "集火右手（站位含右頭、中頭）"], ["warn", "右頭 < 50% 狂暴 → 下煙（王右側 / 綠圈）"], ["warn", "標賊怕電 → 直接往右跳閃，安全再回"], ["", "備案1：英雄+刀賊原地打　・　電完右手通常掉 → 續打右頭+中頭"]]}, {"name": "第五階段 ・ 狂暴下煙（集火右頭+中頭+右手）", "color": "#e11d48", "marks": [{"kind": "O", "x": 60.8, "y": 39.4, "r": 3.2}, {"kind": "O", "x": 49.1, "y": 35.9, "r": 4.1}, {"kind": "O", "x": 60.8, "y": 55.8, "r": 3.8}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 37.6, "y": 55.1, "r": 4}, {"kind": "X", "x": 36.7, "y": 39.1, "r": 4}], "zones": [{"kind": "smoke", "x": 71.8, "y": 45.9, "w": 18.1, "h": 18, "t": "下煙區"}], "pos": {"hero": [68, 42.4], "long": [67.2, 50.7], "dao": [72.6, 50.4], "fa": [28.3, 30.4], "quan": [3.2, 82], "gong": [6.5, 37.3], "biao": [77.6, 42.4], "nu": [13.5, 58.6], "qiang": [89.1, 84.4], "hero2": [72.6, 41.9], "fa2": [21.5, 81.7], "long2": [77.8, 51.1]}, "notes": [["", "狂暴下煙，集火右頭、中頭、右手"], ["warn", "狂暴電擊期：怕電的退到最右綠框安全區"], ["safe", "電完繼續集火，把右頭+中頭+右手清掉"]]}, {"name": "最後階段 ・ 收尾雙腿", "color": "#22c55e", "marks": [{"kind": "O", "x": 36.8, "y": 73.4, "r": 6}, {"kind": "O", "x": 60.8, "y": 73.6, "r": 6}, {"kind": "X", "x": 67, "y": 81, "r": 4}, {"kind": "X", "x": 41, "y": 53, "r": 4}, {"kind": "X", "x": 39, "y": 33, "r": 4}, {"kind": "X", "x": 59, "y": 53, "r": 4}, {"kind": "X", "x": 61, "y": 33, "r": 4}, {"kind": "X", "x": 50, "y": 29, "r": 4}], "zones": [], "pos": {"hero": [69.5, 52.2], "quan": [3.6, 83.8], "gong": [7.2, 36.9], "long": [48.8, 83.7], "dao": [73.7, 52.6], "fa": [23.2, 82.9], "biao": [86.5, 32], "nu": [17.3, 57.4], "qiang": [93.9, 83.3], "hero2": [73.4, 44.8], "fa2": [27.4, 31.6], "long2": [48.9, 74.9]}, "notes": [["", "英雄 → 右下處打"], ["", "拳霸 → 左上"], ["", "箭神（弓手）→ 左下打左腿"], ["safe", "雙腿收尾，肚子留到最後"]]}];
+const STAGES = [{"name": "開場 ・ 就定位", "color": "#64748b", "marks": [{"kind": "O", "x": 68.6, "y": 82.6, "r": 3.3}], "zones": [], "pos": {"hero": [49.4, 84.5], "quan": [6.8, 82.2], "dao": [10.1, 57.8], "biao": [69.5, 25.2], "long": [49.3, 76], "fa": [26.2, 32.5], "gong": [7.3, 38], "nu": [74.8, 52], "qiang": [89.1, 84.5], "hero2": [49.4, 67.6], "fa2": [30.1, 32.5], "long2": [26.2, 84.1]}, "notes": [["", "各職就初始定位，準備開始攻略"], ["warn", "紅框＝危險區、綠框＝安全區（固定鎖定，每階段顯示）"]]}];
 let cur=0, playing=false, timer=null, editMode=false, sel=null;
 const arena=document.getElementById('arena');
 let roleEls={};
@@ -146,7 +155,7 @@ function render(i){
   (st.marks||[]).forEach((m,idx)=>{ const d=document.createElement('div'); d.className='mark '+m.kind;
     d.style.left=m.x+'%'; d.style.top=m.y+'%'; d.style.width=(m.r*2)+'%';
     if(m.kind==='X') d.innerHTML=Xsvg;
-    if(m.label){ const s=document.createElement('span'); s.className='onum'; s.textContent=m.label; d.appendChild(s); }
+    if(m.label){ const s=document.createElement('span'); s.className='onum'; s.textContent=m.label; s.style.fontSize=((arena.clientWidth||700)*(m.r*2/100)*0.6)+'px'; d.appendChild(s); }
     if(editMode){ d.classList.add('editable'); if(sel&&sel.type==='mark'&&sel.index===idx) d.classList.add('sel');
       attachDrag(d,(x,y)=>{m.x=x;m.y=y;d.style.left=x+'%';d.style.top=y+'%';},save,()=>selectItem('mark',idx)); }
     arena.appendChild(d); markEls.push(d); });
@@ -159,13 +168,14 @@ function render(i){
     arena.appendChild(d); zoneEls.push(d); });
   GLOBAL_ZONES.forEach(z=>{ const d=document.createElement('div'); d.className='zone '+z.kind;
     d.style.left=z.x+'%'; d.style.top=z.y+'%'; d.style.width=z.w+'%'; d.style.height=z.h+'%';
-    d.innerHTML='<span>'+(z.t||'')+'</span>'; arena.appendChild(d); zoneEls.push(d); });
+    arena.appendChild(d); zoneEls.push(d); });
   textEls.forEach(t=>t.remove()); textEls=[];
   (st.texts||[]).forEach((tx,idx)=>{ const d=document.createElement('div'); d.className='atext';
-    d.style.left=tx.x+'%'; d.style.top=tx.y+'%'; d.style.fontSize=(tx.size||16)+'px'; d.textContent=tx.t||'';
+    d.style.left=tx.x+'%'; d.style.top=tx.y+'%'; d.style.fontSize=(tx.size||16)+'px'; d.style.color=tx.color||'#ffffff'; d.textContent=tx.t||'';
     if(editMode){ d.classList.add('editable'); if(sel&&sel.type==='text'&&sel.index===idx) d.classList.add('sel');
       attachDrag(d,(x,y)=>{tx.x=x;tx.y=y;d.style.left=x+'%';d.style.top=y+'%';},save,()=>selectItem('text',idx)); }
     arena.appendChild(d); textEls.push(d); });
+  mountHandle();
   renderTitle();
   const ul=document.getElementById('plist'); ul.innerHTML='';
   st.notes.forEach(n=>{ const li=document.createElement('li'); if(n[0])li.className=n[0]; li.textContent=n[1]; ul.appendChild(li); });
@@ -209,6 +219,23 @@ function attachDrag(el,onMove,onEnd,onSelect){
     el.addEventListener('pointermove',move); el.addEventListener('pointerup',up);
   });
 }
+function addHandle(el, apply){
+  const h=document.createElement('div'); h.className='rsz';
+  h.addEventListener('pointerdown',e=>{ if(!editMode) return; e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId);
+    const r=arena.getBoundingClientRect();
+    const move=ev=>{ const px=((ev.clientX-r.left)/r.width)*100; const py=((ev.clientY-r.top)/r.height)*100; apply(px,py,r.height,r.width); };
+    const up=()=>{ h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); save(); };
+    h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); });
+  el.appendChild(h);
+}
+function mountHandle(){
+  arena.querySelectorAll('.rsz').forEach(h=>h.remove());
+  if(!editMode||!sel) return;
+  const st=STAGES[cur];
+  if(sel.type==='mark'){ const el=markEls[sel.index], m=st.marks&&st.marks[sel.index]; if(el&&m) addHandle(el,(px,py)=>{ m.r=Math.max(1,+Math.max(Math.abs(px-m.x),Math.abs(py-m.y)).toFixed(1)); el.style.width=(m.r*2)+'%'; const num=el.querySelector('.onum'); if(num) num.style.fontSize=((arena.clientWidth||700)*(m.r*2/100)*0.6)+'px'; }); }
+  else if(sel.type==='zone'){ const el=zoneEls[sel.index], z=st.zones&&st.zones[sel.index]; if(el&&z) addHandle(el,(px,py)=>{ z.w=Math.max(2,+(2*Math.abs(px-z.x)).toFixed(1)); z.h=Math.max(2,+(2*Math.abs(py-z.y)).toFixed(1)); el.style.width=z.w+'%'; el.style.height=z.h+'%'; }); }
+  else if(sel.type==='text'){ const el=textEls[sel.index], tx=st.texts&&st.texts[sel.index]; if(el&&tx) addHandle(el,(px,py,rh)=>{ tx.size=Math.max(8,Math.round(rh*Math.abs(py-tx.y)/100*2)); el.style.fontSize=tx.size+'px'; }); }
+}
 function selectItem(type,index){ sel={type,index}; refreshSel(); }
 function selectRole(key,inst){ sel={type:'role',key,inst}; refreshSel(); }
 function refreshSel(){
@@ -216,6 +243,7 @@ function refreshSel(){
   zoneEls.forEach((el,i)=>el.classList.toggle('sel', !!(sel&&sel.type==='zone'&&sel.index===i)));
   textEls.forEach((el,i)=>el.classList.toggle('sel', !!(sel&&sel.type==='text'&&sel.index===i)));
   for(const id in roleEls){ const el=roleEls[id]; el.classList.toggle('sel', !!(sel&&sel.type==='role'&&sel.key===el.dataset.k&&+el.dataset.inst===sel.inst)); }
+  mountHandle();
   renderEditor();
 }
 function resizeSel(dir){ const st=STAGES[cur];
@@ -231,7 +259,7 @@ function renderEditor(){
   if(!editMode) return;
   const st=STAGES[cur]; const box=document.getElementById('editor'); box.innerHTML='';
   const g0=grp('階段管理');
-  g0.append( ebtn('⧉ 複製此階段',dupStage), ebtn('＋ 新增階段',addStage), ebtn('🗑 刪除階段',delStage), ebtn('◀ 前移',()=>moveStage(-1)), ebtn('後移 ▶',()=>moveStage(1)), ebtn('📋 插入尾前總站位',insertRefStage) );
+  g0.append( ebtn('⧉ 複製此階段',dupStage), ebtn('＋ 新增階段',addStage), ebtn('🆕 初始頁面',addInitialStage), ebtn('🗑 刪除階段',delStage), ebtn('◀ 前移',()=>moveStage(-1)), ebtn('後移 ▶',()=>moveStage(1)), ebtn('📋 插入尾前總站位',insertRefStage) );
   box.appendChild(g0);
   const g1=grp('主旨');
   const nm=document.createElement('input'); nm.type='text'; nm.value=st.name; nm.style.minWidth='220px'; nm.placeholder='階段主旨/標題';
@@ -266,7 +294,8 @@ function renderEditor(){
     if(obj){ const g=grp('選取：文字');
       const li=document.createElement('input'); li.type='text'; li.placeholder='文字內容'; li.value=(obj.t||''); li.style.minWidth='160px';
       li.oninput=()=>{ obj.t=li.value; render(cur); save(); }; g.append(li);
-      g.append(ebtn('－ 縮小',()=>resizeSel(-1)), ebtn('＋ 放大',()=>resizeSel(1)));
+      const co=document.createElement('input'); co.type='color'; co.value=(obj.color||'#ffffff'); co.title='文字顏色';
+      co.oninput=()=>{ obj.color=co.value; render(cur); save(); }; g.append(co);
       g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); }));
       box.appendChild(g);
     } else sel=null;
@@ -274,7 +303,6 @@ function renderEditor(){
     if(obj){ const g=grp('選取：'+(sel.type==='mark'?(obj.kind==='O'?'〇 目標':'✕ 已斷'):'下煙區'));
       if(sel.type==='mark'){ const li=document.createElement('input'); li.type='text'; li.placeholder='編號/文字'; li.style.width='90px'; li.value=(obj.label||'');
         li.oninput=()=>{ obj.label=li.value; render(cur); save(); }; g.append(li); }
-      g.append(ebtn('－ 縮小',()=>resizeSel(-1)), ebtn('＋ 放大',()=>resizeSel(1)));
       if(sel.type==='zone') g.append(ebtn('改文字',()=>{ const t=prompt('區域文字',obj.t||''); if(t!==null){obj.t=t; render(cur); save();} }));
       g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); }));
       box.appendChild(g);
@@ -330,6 +358,7 @@ function overloadCount(st){ const cells={}; for(const k in st.pos){ (st.pos[k]||
 function deepCopy(o){ return JSON.parse(JSON.stringify(o)); }
 function dupStage(){ const c=deepCopy(STAGES[cur]); c.name=(c.name||'')+' (複製)'; STAGES.splice(cur+1,0,c); cur=cur+1; rebuildSteps(); render(cur); renderEditor(); save(); }
 function addStage(){ STAGES.splice(cur+1,0,{name:'新階段',color:'#38bdf8',marks:[],zones:[],pos:{},notes:[['','說明']]}); cur=cur+1; rebuildSteps(); render(cur); renderEditor(); save(); }
+function addInitialStage(){ STAGES.splice(0,0,{name:'初始站位',color:'#64748b',marks:[],zones:[],pos:{},notes:[]}); cur=0; sel=null; rebuildSteps(); render(cur); renderEditor(); save(); showToast('已新增初始頁面（只有安全/危險區）'); }
 function delStage(){ if(STAGES.length<=1){ showToast('至少保留一個階段'); return; } if(!confirm('刪除目前階段？')) return; STAGES.splice(cur,1); cur=Math.max(0,Math.min(cur,STAGES.length-1)); sel=null; rebuildSteps(); render(cur); renderEditor(); save(); }
 function moveStage(d){ const j=cur+d; if(j<0||j>=STAGES.length){ showToast('已到邊界'); return; } const t=STAGES[cur]; STAGES[cur]=STAGES[j]; STAGES[j]=t; cur=j; rebuildSteps(); render(cur); renderEditor(); save(); }
 function refStage(){ return { name:'尾前總站位（參考·可改）', color:'#0ea5b7', marks:[], zones:[],
