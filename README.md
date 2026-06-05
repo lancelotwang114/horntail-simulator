@@ -46,3 +46,7 @@
 ## 攻略鐵則
 
 尾巴一定要「最先」斷，其他部位先斷＝挑戰失敗。
+
+## 致謝
+
+發想自／參考連結：<https://bulashiterminal.github.io/horntail-party-position-planner/>
