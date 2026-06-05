@@ -82,6 +82,7 @@
   .mark .onum{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:#fde047; font-weight:900; font-size:13px; text-shadow:0 1px 3px #000,0 0 4px #000; pointer-events:none; }
   .ed-warn{ width:100%; text-align:center; color:#fca5a5; font-size:12.5px; font-weight:800; }
   .mini{ font-size:12px; padding:4px 9px; }
+  .ic{ width:34px; height:30px; padding:0; font-size:14px; line-height:1; }
   .note-row{ display:flex; gap:6px; margin:3px 0; align-items:center; width:100%; }
   .note-row input[type=text]{ flex:1; min-width:160px; }
   .grp select,.grp input[type=text]{ background:#0a1626; border:1px solid #335f8c; color:#e6f1ff; border-radius:6px; padding:5px 7px; font-size:13px; }
@@ -255,18 +256,21 @@ function toHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c)?c:'#888888'; }
 function grp(label){ const d=document.createElement('div'); d.className='grp';
   const l=document.createElement('b'); l.textContent=label; l.style.color='#7dd3fc'; l.style.fontSize='12px'; d.appendChild(l); return d; }
 function ebtn(txt,fn){ const b=document.createElement('button'); b.className='mini'; b.textContent=txt; b.onclick=fn; return b; }
+function icon(sym,title,fn){ const b=document.createElement('button'); b.className='ic'; b.textContent=sym; b.title=title; b.onclick=fn; return b; }
 function renderEditor(){
   if(!editMode) return;
   const st=STAGES[cur]; const box=document.getElementById('editor'); box.innerHTML='';
-  const g0=grp('階段管理');
-  g0.append( ebtn('⧉ 複製此階段',dupStage), ebtn('＋ 新增階段',addStage), ebtn('🆕 初始頁面',addInitialStage), ebtn('🗑 刪除階段',delStage), ebtn('◀ 前移',()=>moveStage(-1)), ebtn('後移 ▶',()=>moveStage(1)), ebtn('📋 插入尾前總站位',insertRefStage) );
-  box.appendChild(g0);
-  const g1=grp('主旨');
-  const nm=document.createElement('input'); nm.type='text'; nm.value=st.name; nm.style.minWidth='220px'; nm.placeholder='階段主旨/標題';
+  const g1=grp('階段');
+  const nm=document.createElement('input'); nm.type='text'; nm.value=st.name; nm.style.minWidth='200px'; nm.placeholder='階段主旨/標題';
   nm.oninput=()=>{ st.name=nm.value; renderTitle(); save(); };
   const col=document.createElement('input'); col.type='color'; col.value=toHex(st.color);
   col.oninput=()=>{ st.color=col.value; renderTitle(); save(); };
-  g1.append(nm,col); box.appendChild(g1);
+  g1.append(nm,col);
+  g1.append( icon('⧉','複製此階段',dupStage), icon('＋','新增空白階段',addStage), icon('🗑','刪除此階段',delStage), icon('◀','往前移',()=>moveStage(-1)), icon('▶','往後移',()=>moveStage(1)) );
+  const moreWrap=grp('更多'); moreWrap.style.display='none'; moreWrap.style.flexBasis='100%';
+  moreWrap.append( ebtn('🆕 初始頁面',addInitialStage), ebtn('📋 插入尾前總站位',insertRefStage), ebtn('↺ 重設範本',resetBoard) );
+  g1.append( ebtn('⋯ 更多',()=>{ moreWrap.style.display = moreWrap.style.display==='none'?'flex':'none'; }) );
+  box.appendChild(g1); box.appendChild(moreWrap);
   const g2=grp('職業');
   for(const k in ROLES){ const n=(st.pos[k]?st.pos[k].length:0);
     const c=document.createElement('span'); c.className='chip'+(n?' on':'');
@@ -280,8 +284,7 @@ function renderEditor(){
   g3.append( ebtn('加〇',()=>{ (st.marks=st.marks||[]).push({kind:'O',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); }),
     ebtn('加✕',()=>{ (st.marks=st.marks||[]).push({kind:'X',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); }),
     ebtn('加下煙',()=>{ (st.zones=st.zones||[]).push({kind:'smoke',x:50,y:50,w:15,h:15,t:'下煙區'}); sel={type:'zone',index:st.zones.length-1}; render(cur); renderEditor(); save(); }),
-    ebtn('加文字',()=>{ (st.texts=st.texts||[]).push({x:50,y:50,t:'文字',size:16}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); }),
-    ebtn('加主旨',()=>{ (st.texts=st.texts||[]).push({x:50,y:10,t:(st.name||'主旨'),size:22}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); }) );
+    ebtn('加文字',()=>{ (st.texts=st.texts||[]).push({x:50,y:50,t:'文字',size:16}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); }) );
   box.appendChild(g3);
   if(sel&&sel.type==='role'){ const arr=st.pos[sel.key];
     if(arr&&arr[sel.inst]){ const g=grp('選取：'+(ROLES[sel.key]?ROLES[sel.key].n:''));
@@ -307,7 +310,7 @@ function renderEditor(){
       g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); }));
       box.appendChild(g);
     } else sel=null; }
-  const g4=grp('文字'); g4.style.flexDirection='column'; g4.style.alignItems='stretch'; g4.style.flex='1 1 100%';
+  const g4=grp('說明'); g4.style.flexDirection='column'; g4.style.alignItems='stretch'; g4.style.flex='1 1 100%';
   (st.notes||[]).forEach((n,idx)=>{ const row=document.createElement('div'); row.className='note-row';
     const s=document.createElement('select'); [['','一般'],['warn','警告'],['safe','安全']].forEach(([v,lab])=>{ const o=document.createElement('option'); o.value=v; o.textContent=lab; if((n[0]||'')===v)o.selected=true; s.appendChild(o); });
     s.onchange=()=>{ n[0]=s.value; render(cur); save(); };
@@ -318,7 +321,7 @@ function renderEditor(){
   box.appendChild(g4);
   const ov=overloadCount(st); if(ov){ const w=document.createElement('div'); w.className='ed-warn'; w.textContent='⚠ 有 '+ov+' 處站位超過 3 人（文件建議：同點最多 3 人）'; box.appendChild(w); }
   const g5=grp('存檔');
-  g5.append( ebtn('⬇ 匯出 JSON',exportJSON), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click()), ebtn('🔗 複製分享連結',shareLink), ebtn('↺ 重設範本',resetBoard) );
+  g5.append( ebtn('⬇ 匯出 JSON',exportJSON), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click()), ebtn('🔗 分享連結',shareLink) );
   box.appendChild(g5);
   save();
 }
