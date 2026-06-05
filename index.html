@@ -411,13 +411,19 @@ async function _load(){ if(_t) return _t;
   return null;
 }
 let room=null, send=null, mode=null, hostId=null; const peers=new Set();
+function mkAct(rm,name){ const r=rm.makeAction(name);
+  try{ console.log('makeAction',name,Array.isArray(r)?'[array]':typeof r, r); }catch(_){}
+  if(Array.isArray(r)) return [r[0], r[1]];
+  if(r&&typeof r==='object') return [r.send||r.sendAction||r[0], r.receive||r.get||r.getAction||r[1]];
+  return [r, function(){}];
+}
 async function startHost(){
   if(mode) return;
   const t=await _load(); if(!t){ alert('連線元件載入失敗（CDN 可能被擋）。請按 F12 看主控台的錯誤訊息，或稍後重試。'); return; }
   mode='host';
   const id=Math.random().toString(36).slice(2,8);
   room=t.joinRoom({appId:'horntail-sim'}, id);
-  const [s,g]=room.makeAction('sync'); send=s;
+  const [s,g]=mkAct(room,'sync'); send=s;
   window._htBroadcast=(c)=>{ if(mode==='host') send({cur:c}); };
   room.onPeerJoin(pid=>{ peers.add(pid); send({board:window.HTapp.board(), cur:window.HTapp.cur()}, pid); nstatus('📡 直播中 · 在線 '+peers.size+' 人'); });
   room.onPeerLeave(pid=>{ peers.delete(pid); nstatus('📡 直播中 · 在線 '+peers.size+' 人'); });
@@ -433,7 +439,7 @@ async function joinViewer(id){
   const t=await _load(); if(!t){ nstatus('連線元件載入失敗，請確認網路'); return; }
   mode='viewer';
   room=t.joinRoom({appId:'horntail-sim'}, id);
-  const [s,g]=room.makeAction('sync');
+  const [s,g]=mkAct(room,'sync');
   g((data,pid)=>{ hostId=pid; if(data.board) window.HTapp.applyRemote(data.board); if(data.cur!=null) window.HTapp.gotoRemote(data.cur); nstatus('📡 跟隨房主直播中'); });
   room.onPeerLeave(pid=>{ if(pid===hostId) nstatus('🔚 房主已離開，房間已結束'); });
 }
