@@ -1,0 +1,28 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Editor / IDE =====
+.vscode/
+.idea/
+*.swp
+*~
+
+# ===== Logs / temp =====
+*.log
+*.tmp
+node_modules/
+dist/
+build/
+
+# ===== 本機暫存 / 草稿（依需要保留） =====
+*-archive/
+*.7z
+horntail_stages.json   # 編輯器匯出的暫存範本，非網站必要
+
+# ===== 可選：不想上傳的素材，要保留就把下面幾行刪掉 =====
+# 對話殘留的未使用圖片
+messageImage_*.jpg
+# 參考用文件（1.4MB，網站不需要）
+*.docx
