@@ -83,6 +83,14 @@
   .ed-warn{ width:100%; text-align:center; color:#fca5a5; font-size:12.5px; font-weight:800; }
   .mini{ font-size:12px; padding:4px 9px; }
   .ic{ width:34px; height:30px; padding:0; font-size:14px; line-height:1; }
+  .b-add{ background:#0e2a1a; border-color:#22c55e; color:#86efac; }
+  .b-add:hover{ background:#16401f; }
+  .b-del{ background:#2a1416; border-color:#ef4444; color:#fca5a5; }
+  .b-del:hover{ background:#3a1a1d; }
+  .b-file{ background:#0c2438; border-color:#38bdf8; color:#7dd3fc; }
+  .b-file:hover{ background:#123450; }
+  .b-move{ background:#1c2330; border-color:#64748b; color:#cbd5e1; }
+  .b-move:hover{ background:#28303c; }
   .note-row{ display:flex; gap:6px; margin:3px 0; align-items:center; width:100%; }
   .note-row input[type=text]{ flex:1; min-width:160px; }
   .grp select,.grp input[type=text]{ background:#0a1626; border:1px solid #335f8c; color:#e6f1ff; border-radius:6px; padding:5px 7px; font-size:13px; }
@@ -121,7 +129,7 @@ const ROLES = {
 };
 const GLOBAL_ZONES = [{"kind": "green", "x": 87.2, "y": 47.4, "w": 9.5, "h": 80, "t": "安全區"}, {"kind": "red", "x": 33.2, "y": 47.9, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 16.7, "y": 47.7, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 70.8, "y": 47.3, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 84.8, "y": 48.5, "w": 7.9, "h": 77.6, "t": "危險區"}];
 const STAGES = [{"name":"推薦攻略順序","color":"#64748b","marks":[{"kind":"O","x":69.8,"y":83.2,"r":3.3,"label":"1"},{"kind":"O","x":38.2,"y":54.9,"r":2.6,"label":"2"},{"kind":"O","x":49.3,"y":34.9,"r":3.8,"label":"3"},{"kind":"O","x":60.6,"y":54.9,"r":2.6,"label":"3"},{"kind":"O","x":37.5,"y":39.1,"r":2.3,"label":"2"},{"kind":"O","x":49.5,"y":59.3,"r":5,"label":"4"},{"kind":"O","x":60.8,"y":40.9,"r":4.3,"label":"5"},{"kind":"O","x":49.6,"y":76.6,"r":6.6,"label":"6"}],"zones":[],"pos":{},"notes":[["","尾巴 → 左手 → 左頭 → 中頭 → 右手 → 右頭 → 雙腿 → 肚子"]],"texts":[{"x":50.7,"y":6.2,"t":"推薦攻略順序","size":39}]}];
-let cur=0, playing=false, timer=null, editMode=false, sel=null;
+let cur=0, playing=false, timer=null, editMode=false, sel=null, dirty=false;
 const arena=document.getElementById('arena');
 let roleEls={};
 let markEls=[], zoneEls=[], textEls=[];
@@ -255,22 +263,20 @@ function resizeSel(dir){ const st=STAGES[cur];
 function toHex(c){ return /^#[0-9a-fA-F]{6}$/.test(c)?c:'#888888'; }
 function grp(label){ const d=document.createElement('div'); d.className='grp';
   const l=document.createElement('b'); l.textContent=label; l.style.color='#7dd3fc'; l.style.fontSize='12px'; d.appendChild(l); return d; }
-function ebtn(txt,fn){ const b=document.createElement('button'); b.className='mini'; b.textContent=txt; b.onclick=fn; return b; }
-function icon(sym,title,fn){ const b=document.createElement('button'); b.className='ic'; b.textContent=sym; b.title=title; b.onclick=fn; return b; }
+function ebtn(txt,fn,cls){ const b=document.createElement('button'); b.className='mini'+(cls?' '+cls:''); b.textContent=txt; b.onclick=fn; return b; }
+function icon(sym,title,fn,cls){ const b=document.createElement('button'); b.className='ic'+(cls?' '+cls:''); b.textContent=sym; b.title=title; b.onclick=fn; return b; }
 function renderEditor(){
   if(!editMode) return;
   const st=STAGES[cur]; const box=document.getElementById('editor'); box.innerHTML='';
   const g1=grp('階段');
-  const nm=document.createElement('input'); nm.type='text'; nm.value=st.name; nm.style.minWidth='200px'; nm.placeholder='階段主旨/標題';
+  const nm=document.createElement('input'); nm.type='text'; nm.value=st.name; nm.style.minWidth='200px'; nm.placeholder='階段標題';
   nm.oninput=()=>{ st.name=nm.value; renderTitle(); save(); };
   const col=document.createElement('input'); col.type='color'; col.value=toHex(st.color);
   col.oninput=()=>{ st.color=col.value; renderTitle(); save(); };
   g1.append(nm,col);
-  g1.append( icon('⧉','複製此階段',dupStage), icon('＋','新增空白階段',addStage), icon('🗑','刪除此階段',delStage), icon('◀','往前移',()=>moveStage(-1)), icon('▶','往後移',()=>moveStage(1)) );
-  const moreWrap=grp('更多'); moreWrap.style.display='none'; moreWrap.style.flexBasis='100%';
-  moreWrap.append( ebtn('🆕 初始頁面',addInitialStage), ebtn('📋 插入尾前總站位',insertRefStage), ebtn('↺ 重設範本',resetBoard) );
-  g1.append( ebtn('⋯ 更多',()=>{ moreWrap.style.display = moreWrap.style.display==='none'?'flex':'none'; }) );
-  box.appendChild(g1); box.appendChild(moreWrap);
+  g1.append( icon('⧉','複製此階段',dupStage,'b-add'), icon('＋','新增空白階段',addStage,'b-add'), icon('🗑','刪除此階段',delStage,'b-del'), icon('◀','往前移',()=>moveStage(-1),'b-move'), icon('▶','往後移',()=>moveStage(1),'b-move') );
+  g1.append( ebtn('加空白頁',addInitialStage,'b-add'), ebtn('清空重來',resetBoard,'b-del') );
+  box.appendChild(g1);
   const g2=grp('職業');
   for(const k in ROLES){ const n=(st.pos[k]?st.pos[k].length:0);
     const c=document.createElement('span'); c.className='chip'+(n?' on':'');
@@ -280,17 +286,17 @@ function renderEditor(){
       render(cur); renderEditor(); save(); };
     g2.appendChild(c); }
   box.appendChild(g2);
-  const g3=grp('物件');
-  g3.append( ebtn('加〇',()=>{ (st.marks=st.marks||[]).push({kind:'O',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); }),
-    ebtn('加✕',()=>{ (st.marks=st.marks||[]).push({kind:'X',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); }),
-    ebtn('加下煙',()=>{ (st.zones=st.zones||[]).push({kind:'smoke',x:50,y:50,w:15,h:15,t:'下煙區'}); sel={type:'zone',index:st.zones.length-1}; render(cur); renderEditor(); save(); }),
-    ebtn('加文字',()=>{ (st.texts=st.texts||[]).push({x:50,y:50,t:'文字',size:16}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); }) );
+  const g3=grp('標記');
+  g3.append( ebtn('加〇',()=>{ (st.marks=st.marks||[]).push({kind:'O',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); },'b-add'),
+    ebtn('加✕',()=>{ (st.marks=st.marks||[]).push({kind:'X',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); },'b-add'),
+    ebtn('加下煙',()=>{ (st.zones=st.zones||[]).push({kind:'smoke',x:50,y:50,w:15,h:15,t:'下煙區'}); sel={type:'zone',index:st.zones.length-1}; render(cur); renderEditor(); save(); },'b-add'),
+    ebtn('加文字',()=>{ (st.texts=st.texts||[]).push({x:50,y:50,t:'文字',size:16}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); },'b-add') );
   box.appendChild(g3);
   if(sel&&sel.type==='role'){ const arr=st.pos[sel.key];
     if(arr&&arr[sel.inst]){ const g=grp('選取：'+(ROLES[sel.key]?ROLES[sel.key].n:''));
       const li=document.createElement('input'); li.type='text'; li.placeholder='名字/標籤'; li.value=(arr[sel.inst][2]||'');
       li.oninput=()=>{ arr[sel.inst][2]=li.value; render(cur); save(); }; g.append(li);
-      g.append(ebtn('🗑 移除這個',()=>{ arr.splice(sel.inst,1); if(!arr.length) delete st.pos[sel.key]; sel=null; render(cur); renderEditor(); save(); }));
+      g.append(ebtn('🗑 移除這個',()=>{ arr.splice(sel.inst,1); if(!arr.length) delete st.pos[sel.key]; sel=null; render(cur); renderEditor(); save(); },'b-del'));
       box.appendChild(g);
     } else sel=null;
   } else if(sel&&sel.type==='text'){ const arr=st.texts; const obj=arr&&arr[sel.index];
@@ -299,7 +305,7 @@ function renderEditor(){
       li.oninput=()=>{ obj.t=li.value; render(cur); save(); }; g.append(li);
       const co=document.createElement('input'); co.type='color'; co.value=(obj.color||'#ffffff'); co.title='文字顏色';
       co.oninput=()=>{ obj.color=co.value; render(cur); save(); }; g.append(co);
-      g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); }));
+      g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); },'b-del'));
       box.appendChild(g);
     } else sel=null;
   } else if(sel){ const arr=sel.type==='mark'?st.marks:st.zones; const obj=arr&&arr[sel.index];
@@ -307,7 +313,7 @@ function renderEditor(){
       if(sel.type==='mark'){ const li=document.createElement('input'); li.type='text'; li.placeholder='編號/文字'; li.style.width='90px'; li.value=(obj.label||'');
         li.oninput=()=>{ obj.label=li.value; render(cur); save(); }; g.append(li); }
       if(sel.type==='zone') g.append(ebtn('改文字',()=>{ const t=prompt('區域文字',obj.t||''); if(t!==null){obj.t=t; render(cur); save();} }));
-      g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); }));
+      g.append(ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); },'b-del'));
       box.appendChild(g);
     } else sel=null; }
   const g4=grp('說明'); g4.style.flexDirection='column'; g4.style.alignItems='stretch'; g4.style.flex='1 1 100%';
@@ -315,19 +321,19 @@ function renderEditor(){
     const s=document.createElement('select'); [['','一般'],['warn','警告'],['safe','安全']].forEach(([v,lab])=>{ const o=document.createElement('option'); o.value=v; o.textContent=lab; if((n[0]||'')===v)o.selected=true; s.appendChild(o); });
     s.onchange=()=>{ n[0]=s.value; render(cur); save(); };
     const t=document.createElement('input'); t.type='text'; t.value=n[1]; t.oninput=()=>{ n[1]=t.value; render(cur); save(); };
-    const x=ebtn('🗑',()=>{ st.notes.splice(idx,1); render(cur); renderEditor(); save(); });
+    const x=ebtn('🗑',()=>{ st.notes.splice(idx,1); render(cur); renderEditor(); save(); },'b-del');
     row.append(s,t,x); g4.appendChild(row); });
-  g4.appendChild(ebtn('＋ 加一行',()=>{ (st.notes=st.notes||[]).push(['','新說明']); render(cur); renderEditor(); save(); }));
+  g4.appendChild(ebtn('＋ 加一行',()=>{ (st.notes=st.notes||[]).push(['','新說明']); render(cur); renderEditor(); save(); },'b-add'));
   box.appendChild(g4);
   const ov=overloadCount(st); if(ov){ const w=document.createElement('div'); w.className='ed-warn'; w.textContent='⚠ 有 '+ov+' 處站位超過 3 人（文件建議：同點最多 3 人）'; box.appendChild(w); }
-  const g5=grp('存檔');
-  g5.append( ebtn('⬇ 匯出 JSON',exportJSON), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click()), ebtn('🔗 分享連結',shareLink) );
+  const g5=grp('檔案');
+  g5.append( ebtn('⬇ 匯出 JSON',exportJSON,'b-file'), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 分享連結',shareLink,'b-file') );
   box.appendChild(g5);
   save();
 }
 function exportJSON(){ const data=JSON.stringify({version:1,STAGES,GLOBAL_ZONES},null,2);
   const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download='horntail_stages.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); showToast('已匯出 JSON'); }
+  const a=document.createElement('a'); a.href=url; a.download='horntail_stages.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); dirty=false; showToast('已匯出 JSON'); }
 document.getElementById('importFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return;
   const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result);
     if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); }
@@ -336,7 +342,7 @@ document.getElementById('importFile').onchange=ev=>{ const f=ev.target.files[0];
   }catch(err){ alert('JSON 解析失敗：'+err.message); } };
   rd.readAsText(f); ev.target.value=''; };
 let saveTimer=null;
-function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem('horntail_board', JSON.stringify({version:1,STAGES,GLOBAL_ZONES})); }catch(e){} },400); }
+function save(){ dirty=true; clearTimeout(saveTimer); saveTimer=setTimeout(()=>{ try{ localStorage.setItem('horntail_board', JSON.stringify({version:1,STAGES,GLOBAL_ZONES})); }catch(e){} },400); }
 function applyBoard(o){ if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); } if(Array.isArray(o.GLOBAL_ZONES)){ GLOBAL_ZONES.length=0; o.GLOBAL_ZONES.forEach(z=>GLOBAL_ZONES.push(z)); } }
 function loadSaved(){ try{ const s=localStorage.getItem('horntail_board'); if(s){ const o=JSON.parse(s); if(Array.isArray(o.STAGES)&&o.STAGES.length){ applyBoard(o); return true; } } }catch(e){} return false; }
 function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
@@ -376,6 +382,7 @@ function setEdit(on){ editMode=on; document.body.classList.toggle('edit',on);
   render(cur); renderEditor();
   if(on) showToast('編輯模式：拖曳圖示移動，點 〇✕／下煙 可縮放刪除'); }
 editBtn.onclick=()=>setEdit(!editMode);
+window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
 arena.addEventListener('pointerdown',e=>{ if(editMode && e.target===arena && sel){ sel=null; refreshSel(); } });
 let readOnly=false;
 const _hash=parseHash();
