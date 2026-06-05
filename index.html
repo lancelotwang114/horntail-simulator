@@ -330,7 +330,7 @@ function renderEditor(){
   box.appendChild(g4);
   const ov=overloadCount(st); if(ov){ const w=document.createElement('div'); w.className='ed-warn'; w.textContent='⚠ 有 '+ov+' 處站位超過 3 人（文件建議：同點最多 3 人）'; box.appendChild(w); }
   const g5=grp('檔案');
-  g5.append( ebtn('💾 存檔',saveToFile,'b-file'), ebtn('⬇ 匯出 JSON',exportJSON,'b-file'), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 分享連結',shareLink,'b-file') );
+  g5.append( ebtn('💾 存檔',saveToFile,'b-file'), ebtn('📂 讀取',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 分享連結',shareLink,'b-file') );
   box.appendChild(g5);
   save();
 }
