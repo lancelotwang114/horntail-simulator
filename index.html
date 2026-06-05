@@ -405,11 +405,15 @@ const _p=new URLSearchParams(location.search); const _room=_p.get('room');
 const netbar=document.getElementById('netbar');
 function nstatus(m){ if(netbar){ netbar.textContent=m; netbar.style.display='block'; } }
 let _t=null;
-async function _load(){ if(_t) return _t; try{ _t=await import('https://esm.sh/trystero/torrent'); }catch(e){ _t=null; } return _t; }
+async function _load(){ if(_t) return _t;
+  const urls=['https://esm.sh/trystero/nostr','https://cdn.jsdelivr.net/npm/trystero/nostr/+esm','https://esm.sh/trystero','https://cdn.jsdelivr.net/npm/trystero/+esm'];
+  for(const u of urls){ try{ const m=await import(u); if(m&&m.joinRoom){ _t=m; console.log('Trystero loaded:',u); return _t; } }catch(e){ console.warn('Trystero 載入失敗:',u,e); } }
+  return null;
+}
 let room=null, send=null, mode=null, hostId=null; const peers=new Set();
 async function startHost(){
   if(mode) return;
-  const t=await _load(); if(!t){ alert('連線元件載入失敗，請確認網路後重試'); return; }
+  const t=await _load(); if(!t){ alert('連線元件載入失敗（CDN 可能被擋）。請按 F12 看主控台的錯誤訊息，或稍後重試。'); return; }
   mode='host';
   const id=Math.random().toString(36).slice(2,8);
   room=t.joinRoom({appId:'horntail-sim'}, id);
