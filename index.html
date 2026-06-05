@@ -42,6 +42,10 @@
   button:hover{ background:#1c456c; }
   button.primary{ background:#38bdf8; border-color:#38bdf8; color:#04263b; }
   #editBtn{ margin-left:10px; border-color:#38bdf8; color:#7dd3fc; }
+  #hostBtn{ border-color:#22c55e; color:#86efac; }
+  #netbar{ display:none; text-align:center; margin:8px auto 0; max-width:560px; background:#0c2a22; border:1px solid #14532d; color:#bbf7d0; border-radius:9px; padding:7px 12px; font-size:13px; font-weight:700; }
+  body.viewer .steps{ pointer-events:none; opacity:.45; }
+  body.viewer #hostBtn{ display:none; }
   .steps{ display:flex; gap:7px; justify-content:center; flex-wrap:wrap; }
   .dot{ width:14px; height:14px; border-radius:50%; background:#33597f; cursor:pointer; display:flex;
     align-items:center; justify-content:center; font-size:9px; color:#0a1626; font-weight:900;}
@@ -102,7 +106,9 @@
     <button id="prev">◀ 上一階段</button>
     <button id="next">下一階段 ▶</button>
     <button id="editBtn">✏ 編輯模式</button>
+    <button id="hostBtn">📡 開房直播</button>
   </div>
+  <div id="netbar"></div>
   <div class="steps" id="steps"></div>
   <div class="kbd-hint">鍵盤：<kbd>←</kbd> <kbd>→</kbd> 切換階段　・　編輯時 <kbd>方向鍵</kbd> 微調、<kbd>Esc</kbd> 退出</div>
   <div id="editor"></div>
@@ -120,7 +126,7 @@ const ROLES = {
 };
 const GLOBAL_ZONES = [{"kind": "green", "x": 87.2, "y": 47.4, "w": 9.5, "h": 80, "t": "安全區"}, {"kind": "red", "x": 33.2, "y": 47.9, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 16.7, "y": 47.7, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 70.8, "y": 47.3, "w": 7.9, "h": 77.6, "t": "危險區"}, {"kind": "red", "x": 84.8, "y": 48.5, "w": 7.9, "h": 77.6, "t": "危險區"}];
 const STAGES = [{"name":"推薦攻略順序","color":"#64748b","marks":[{"kind":"O","x":69.8,"y":83.2,"r":3.3,"label":"1"},{"kind":"O","x":38.2,"y":54.9,"r":2.6,"label":"2"},{"kind":"O","x":49.3,"y":34.9,"r":3.8,"label":"3"},{"kind":"O","x":60.6,"y":54.9,"r":2.6,"label":"3"},{"kind":"O","x":37.5,"y":39.1,"r":2.3,"label":"2"},{"kind":"O","x":49.5,"y":59.3,"r":5,"label":"4"},{"kind":"O","x":60.8,"y":40.9,"r":4.3,"label":"5"},{"kind":"O","x":49.6,"y":76.6,"r":6.6,"label":"6"}],"zones":[],"pos":{},"notes":[["","尾巴 → 左手 → 左頭 → 中頭 → 右手 → 右頭 → 雙腿 → 肚子"]],"texts":[{"x":50.7,"y":6.2,"t":"推薦攻略順序","size":39}]}];
-let cur=0, playing=false, timer=null, editMode=false, sel=null;
+let cur=0, playing=false, timer=null, editMode=false, sel=null, _remoteNav=false, _viewerLock=false;
 const arena=document.getElementById('arena');
 let roleEls={};
 let markEls=[], zoneEls=[], textEls=[];
@@ -187,14 +193,17 @@ let toastTimer=null;
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1400); }
 function go(i){
+  if(_viewerLock && !_remoteNav) return;
   if(i<0){ showToast('已是第一階段'); i=0; }
   else if(i>STAGES.length-1){ showToast('已是最後階段'); i=STAGES.length-1; }
   cur=i; render(cur); if(editMode) renderEditor();
+  if(window._htBroadcast && !_remoteNav) window._htBroadcast(cur);
 }
 document.getElementById('next').onclick=()=>go(cur+1);
 document.getElementById('prev').onclick=()=>go(cur-1);
 document.addEventListener('keydown',e=>{
   if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(_viewerLock) return;
   if(e.key==='Escape'){ if(sel){ sel=null; refreshSel(); } else if(editMode){ setEdit(false); } return; }
   if(editMode&&sel&&(e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='ArrowUp'||e.key==='ArrowDown')){ e.preventDefault(); nudgeSel(e.key, e.shiftKey?2:0.5); return; }
   if(e.key==='ArrowRight'){ e.preventDefault(); go(cur+1); }
@@ -379,7 +388,51 @@ const _hash=parseHash();
 if(_hash&&_hash.board&&Array.isArray(_hash.board.STAGES)){ applyBoard(_hash.board); readOnly=(_hash.mode==='view'); }
 else { loadSaved(); }
 if(readOnly){ editBtn.style.display='none'; }
+window.HTapp = {
+  board:()=>JSON.parse(JSON.stringify({version:1,STAGES,GLOBAL_ZONES})),
+  cur:()=>cur,
+  applyRemote:(o)=>{ if(Array.isArray(o.STAGES)){STAGES.length=0;o.STAGES.forEach(s=>STAGES.push(s));} if(Array.isArray(o.GLOBAL_ZONES)){GLOBAL_ZONES.length=0;o.GLOBAL_ZONES.forEach(z=>GLOBAL_ZONES.push(z));} migrate(); clearRoles(); rebuildSteps(); if(cur>STAGES.length-1)cur=STAGES.length-1; render(cur); },
+  gotoRemote:(c)=>{ _remoteNav=true; go(c); _remoteNav=false; },
+  lockViewer:()=>{ _viewerLock=true; document.body.classList.add('viewer'); editBtn.style.display='none'; document.getElementById('prev').disabled=true; document.getElementById('next').disabled=true; }
+};
 migrate();
 rebuildSteps();
 go(0);
+</script>
+<script type="module">
+const PAGES='https://lancelotwang114.github.io/horntail-simulator/';
+const _p=new URLSearchParams(location.search); const _room=_p.get('room');
+const netbar=document.getElementById('netbar');
+function nstatus(m){ if(netbar){ netbar.textContent=m; netbar.style.display='block'; } }
+let _t=null;
+async function _load(){ if(_t) return _t; try{ _t=await import('https://esm.sh/trystero/torrent'); }catch(e){ _t=null; } return _t; }
+let room=null, send=null, mode=null, hostId=null; const peers=new Set();
+async function startHost(){
+  if(mode) return;
+  const t=await _load(); if(!t){ alert('連線元件載入失敗，請確認網路後重試'); return; }
+  mode='host';
+  const id=Math.random().toString(36).slice(2,8);
+  room=t.joinRoom({appId:'horntail-sim'}, id);
+  const [s,g]=room.makeAction('sync'); send=s;
+  window._htBroadcast=(c)=>{ if(mode==='host') send({cur:c}); };
+  room.onPeerJoin(pid=>{ peers.add(pid); send({board:window.HTapp.board(), cur:window.HTapp.cur()}, pid); nstatus('📡 直播中 · 在線 '+peers.size+' 人'); });
+  room.onPeerLeave(pid=>{ peers.delete(pid); nstatus('📡 直播中 · 在線 '+peers.size+' 人'); });
+  history.replaceState(null,'',location.pathname+'?room='+id);
+  const link=PAGES+'?room='+id;
+  nstatus('📡 直播中 · 在線 0 人（房間連結已複製，傳給朋友即可）');
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(link).catch(()=>prompt('房間連結',link)); } else prompt('房間連結',link);
+  const hb=document.getElementById('hostBtn'); if(hb){ hb.textContent='📡 直播中'; hb.disabled=true; }
+}
+async function joinViewer(id){
+  window.HTapp.lockViewer();
+  nstatus('📡 連線中…等待房主');
+  const t=await _load(); if(!t){ nstatus('連線元件載入失敗，請確認網路'); return; }
+  mode='viewer';
+  room=t.joinRoom({appId:'horntail-sim'}, id);
+  const [s,g]=room.makeAction('sync');
+  g((data,pid)=>{ hostId=pid; if(data.board) window.HTapp.applyRemote(data.board); if(data.cur!=null) window.HTapp.gotoRemote(data.cur); nstatus('📡 跟隨房主直播中'); });
+  room.onPeerLeave(pid=>{ if(pid===hostId) nstatus('🔚 房主已離開，房間已結束'); });
+}
+const hb=document.getElementById('hostBtn'); if(hb) hb.onclick=startHost;
+if(_room) joinViewer(_room);
 </script>
