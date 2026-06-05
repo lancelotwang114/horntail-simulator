@@ -327,13 +327,23 @@ function renderEditor(){
   box.appendChild(g4);
   const ov=overloadCount(st); if(ov){ const w=document.createElement('div'); w.className='ed-warn'; w.textContent='⚠ 有 '+ov+' 處站位超過 3 人（文件建議：同點最多 3 人）'; box.appendChild(w); }
   const g5=grp('檔案');
-  g5.append( ebtn('⬇ 匯出 JSON',exportJSON,'b-file'), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 分享連結',shareLink,'b-file') );
+  g5.append( ebtn('💾 存檔',saveToFile,'b-file'), ebtn('⬇ 匯出 JSON',exportJSON,'b-file'), ebtn('⬆ 匯入 JSON',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 分享連結',shareLink,'b-file') );
   box.appendChild(g5);
   save();
 }
 function exportJSON(){ const data=JSON.stringify({version:1,STAGES,GLOBAL_ZONES},null,2);
   const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='horntail_stages.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); dirty=false; showToast('已匯出 JSON'); }
+let fileHandle=null;
+async function saveToFile(){
+  const data=JSON.stringify({version:1,STAGES,GLOBAL_ZONES},null,2);
+  try{
+    if(!window.showSaveFilePicker) throw 0;
+    if(!fileHandle){ fileHandle=await window.showSaveFilePicker({suggestedName:'horntail_stages.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]}); }
+    const w=await fileHandle.createWritable(); await w.write(data); await w.close();
+    dirty=false; showToast('已存檔（覆蓋）');
+  }catch(e){ if(e&&e.name==='AbortError') return; exportJSON(); }
+}
 document.getElementById('importFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return;
   const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result);
     if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); }
