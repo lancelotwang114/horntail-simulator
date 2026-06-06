@@ -43,6 +43,39 @@ body{ background:#0c0d10; min-height:100vh; }
 .sb:hover{ filter:brightness(1.3); }
 .sb.dup{ color:#9ee6ff; }
 .sb.del{ color:#ff8a7e; border-color:#5a3340; }
+.sb.note{ color:#ffd479; }
+
+/* 職業列（地圖上方・編輯模式才顯示） */
+.job-tray{ display:none; flex-direction:column; gap:6px; padding:8px 10px; margin-bottom:8px;
+  background:var(--ed-soft,rgba(120,160,200,.14)); border:1px solid var(--ed-accent,#5fd0ff); border-radius:12px; }
+.jt-row{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.jt-lab{ flex:0 0 auto; width:30px; font-size:12px; font-weight:900; color:var(--ed-accent,#5fd0ff);
+  letter-spacing:2px; user-select:none; }
+.jt-hint{ font-size:12px; font-weight:800; color:var(--ed-accent,#5fd0ff); opacity:.85; padding-right:2px; user-select:none; }
+.jt-cell{ position:relative; display:flex; flex-direction:column; align-items:center; gap:2px; width:52px; padding:4px 2px 3px;
+  border-radius:9px; border:1px solid #313c49; background:#1b222c; cursor:grab; }
+.jt-cell:hover{ border-color:var(--ed-accent,#5fd0ff); background:#222c39; }
+.jt-cell.on{ border-color:var(--ed-accent,#5fd0ff); box-shadow:0 0 0 1px var(--ed-soft,rgba(95,208,255,.3)) inset; }
+.jt-cell.dragging{ opacity:.4; }
+.jt-cell img{ width:34px; height:34px; border-radius:7px; border:1px solid #3a4654; pointer-events:none; }
+.jt-n{ font-size:10.5px; font-weight:800; color:#cfe2f5; line-height:1; white-space:nowrap; }
+.jt-ct{ position:absolute; top:-5px; right:-5px; min-width:17px; height:17px; padding:0 4px; border-radius:9px;
+  background:var(--ed-accent,#5fd0ff); color:var(--ed-ink,#04293f); font-size:11px; font-weight:900; line-height:17px; text-align:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.4); }
+/* 工具格（O／X／煙／T）＋分隔線 */
+.jt-cell.jt-tool{ width:42px; min-height:42px; justify-content:center; cursor:grab; }
+.jt-cell.jt-tool:active{ cursor:grabbing; }
+.tt-prev{ width:26px; height:26px; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.tt-prev.tt-o{ border:3px solid #ffc83d; border-radius:50%; box-shadow:0 0 7px rgba(255,200,61,.55); }
+.tt-prev.tt-x{ color:#ff5a4f; font-size:21px; font-weight:900; }
+.tt-prev.tt-s{ font-size:19px; }
+.tt-prev.tt-t{ color:#cfe2f5; font-size:19px; font-weight:900; font-family:"Noto Serif TC",serif; }
+.jt-div{ width:1px; align-self:stretch; margin:2px 4px; background:rgba(128,128,128,.4); flex:0 0 auto; }
+
+/* 圖上職業備註就地編輯 */
+.role .lbl.lbl-edit{ outline:1px solid var(--ed-accent,#5fd0ff); border-radius:5px; padding:0 4px; cursor:text;
+  background:rgba(0,0,0,.45); min-width:24px; }
+.role .lbl.lbl-edit:empty::before{ content:attr(data-ph); opacity:.6; }
 
 /* readonly：游標提示 */
 .app.readonly .cbtn{ }
@@ -69,8 +102,32 @@ body{ background:#0c0d10; min-height:100vh; }
   border:2px solid #38bdf8; border-radius:3px; cursor:nwse-resize; z-index:40; pointer-events:auto; box-shadow:0 1px 3px rgba(0,0,0,.6); }
 
 /* ===== 編輯器面板（分區卡片 + 主題輔色） ===== */
+/* ===== 階段條（地圖下方・編輯模式才顯示） ===== */
 #editor{ display:none; }
-.app.edit #editor{ display:block; border-radius:16px; overflow:hidden;
+.stage-bar{ margin-top:8px; flex-wrap:wrap; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:12px;
+  background:var(--ed-soft,rgba(120,160,200,.14)); border:1px solid var(--ed-accent,#5fd0ff); }
+.stb-lab{ font-size:12.5px; font-weight:900; color:var(--ed-accent,#5fd0ff); letter-spacing:1px; user-select:none; }
+.stb-color{ display:inline-flex; align-items:center; gap:3px; font-size:14px; cursor:pointer;
+  padding:3px 6px; border-radius:8px; border:1px solid #3a4654; background:#1b222c; }
+.stb-color input{ width:24px; height:22px; padding:0; border:none; background:none; cursor:pointer; }
+.stb-grp{ display:inline-flex; flex-wrap:wrap; gap:5px; }
+.stb-btn{ font:inherit; font-size:12.5px; font-weight:800; padding:6px 11px; border-radius:8px; cursor:pointer;
+  border:1px solid #3a4654; background:#222c39; color:#dbe7f3; line-height:1; }
+.stb-btn:hover{ border-color:var(--ed-accent,#5fd0ff); background:#28333f; }
+.stb-btn.danger{ color:#ff9a8e; border-color:#5a3340; }
+.stb-btn.danger:hover{ background:#3a2228; border-color:#ff8a7e; }
+.stb-btn.ghost{ margin-left:auto; background:transparent; color:#8da3bb; border-color:#2a3441; }
+.stb-btn.ghost:hover{ color:#cfe2f5; }
+.stb-btn.wide{ background:var(--ed-soft,rgba(95,208,255,.14)); border-color:var(--ed-accent,#5fd0ff); color:var(--ed-accent,#5fd0ff); }
+.stb-btn.wide:hover{ filter:brightness(1.12); }
+/* 唯讀分享頁標示 */
+.ro-badge{ display:inline-block; margin-top:3px; font-size:12px; font-weight:800; padding:2px 9px; border-radius:999px;
+  background:rgba(0,0,0,.28); color:#fff; letter-spacing:.5px; }
+.readonly .job-tray, .readonly #editor, .readonly .sel-bar{ display:none !important; }
+
+/* ===== 舊編輯器面板（保留樣式不影響） ===== */
+.app.edit #editor.ed-legacy{ display:block; border-radius:16px; overflow:hidden;
   background:#0f1319; border:1px solid #2a3441; box-shadow:0 12px 32px rgba(0,0,0,.5); }
 
 .ed-head{ display:flex; align-items:center; gap:14px; padding:13px 18px;

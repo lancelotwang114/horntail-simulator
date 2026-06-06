@@ -11,6 +11,9 @@
 .sub{ font-size:12.5px; margin-top:2px; }
 .hdr-actions{ display:flex; gap:8px; }
 .hbtn{ font:inherit; font-size:13px; font-weight:700; padding:7px 14px; border-radius:8px; cursor:pointer; border:1px solid transparent; }
+.hbtn.ic{ padding:7px 10px; font-size:15px; line-height:1; }
+.hbtn.edit-only{ display:none; }
+#app.edit .hbtn.edit-only{ display:inline-flex; align-items:center; }
 
 /* rule banner */
 .rule{ font-size:13.5px; font-weight:700; padding:9px 16px; border-radius:10px; text-align:center; }
@@ -49,13 +52,31 @@
 /* zones */
 .zone{ position:absolute; transform:translate(-50%,-50%); border-radius:10px; z-index:3;
   display:flex; align-items:flex-start; justify-content:center; padding-top:4px; }
-.zone.smoke{ z-index:4; }
+.zone.smoke{ z-index:4; align-items:center; }
 .zone span{ font-size:11px; font-weight:800; padding:1px 7px; border-radius:5px;
   color:#fff; text-shadow:0 1px 2px #000; background:rgba(0,0,0,.35); }
+.zone span.zsmoke{ background:none; padding:0; font-size:26px; line-height:1; opacity:.92; filter:drop-shadow(0 1px 3px rgba(0,0,0,.6)); }
 
 /* legend */
 .legend{ display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:center; font-size:12px; font-weight:700; }
 .lg{ display:inline-flex; align-items:center; gap:4px; }
+
+/* 危險/安全區 顯示開關 */
+.zone-toggles{ display:flex; gap:10px; justify-content:center; }
+.zt-btn{ display:inline-flex; align-items:center; gap:8px; font:inherit; font-size:13px; font-weight:800;
+  padding:7px 14px 7px 11px; border-radius:999px; cursor:pointer; border:1.5px solid; background:transparent;
+  transition:opacity .15s, background .15s, border-color .15s; }
+.zt-sw{ width:30px; height:17px; border-radius:999px; position:relative; flex:0 0 auto; background:currentColor; opacity:.32; transition:opacity .15s; }
+.zt-sw::after{ content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.4); transition:left .16s ease; }
+.zt-btn.on .zt-sw{ opacity:1; }
+.zt-btn.on .zt-sw::after{ left:15px; }
+.zt-btn.red{ color:#e8645c; }
+.zt-btn.green{ color:#3fae54; }
+.zt-btn:not(.on){ opacity:.5; }
+.zt-btn.red.on{ background:rgba(232,90,79,.12); border-color:rgba(232,90,79,.6); }
+.zt-btn.green.on{ background:rgba(95,184,120,.14); border-color:rgba(95,184,120,.6); }
+.zt-btn:not(.on){ border-color:rgba(128,128,128,.4); color:#9aa7b4; }
 
 /* panel */
 .ptitle{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }

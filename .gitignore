@@ -1,56 +1,41 @@
-# ===== OS =====
+# ===== OS / 編輯器 =====
 .DS_Store
 Thumbs.db
 desktop.ini
-
-# ===== Editor / IDE =====
 .vscode/
 .idea/
 *.swp
 *~
 
-# ===== Logs / temp =====
-*.log
-*.tmp
-node_modules/
-dist/
-build/
-
-# ===== 本機暫存 / 草稿（依需要保留） =====
-*-archive/
-*.7z
-.__*
-
-# ===== 我的私人範本（不上傳；放這裡的都不會進公開 repo） =====
-範本/
-horntail_stages.json
-*.template.json
-闇黑龍王_互動攻略_自用.html
-
-# ===== 舊版殘留素材（新版已改用 assets/，不再需要） =====
-職業/
-default.jpg
-
-# ===== 不上傳的素材（本機保留，不進 repo） =====
-# 對話殘留的未使用圖片
-messageImage_*.jpg
-# 參考用文件（1.4MB，網站不需要）
-*.docx
-
-# ===== 內部文件 / 筆記（只留必要，本機保留） =====
-HANDOFF.md
-PLAN.md
-闇黑龍王_攻略筆記.md
-闇黑龍王_攻略流程圖.svg
-闇黑龍王_攻略_單檔.html
-闇黑龍王_完整攻略.html
-闇黑龍王_完整攻略-檢視版.html
-闇黑龍王_互動攻略_自用編輯版.html
-
-# ===== 開發/比稿用，非網站本體（防呆） =====
-github-upload/
-視覺方向比較.html
-design-canvas.jsx
+# ===== 除錯／截圖／暫存夾 =====
+_chk/
+_ref/
+screenshots/
 uploads/
 scraps/
 .thumbnail
+*.napkin
+
+# ===== 打包重複資料夾 =====
+github-upload/
+
+# ===== 比稿／開發用，非網站本體 =====
+視覺方向比較.html
+design-canvas.jsx
+directions/board-data.js
+directions/Screen.jsx
+
+# ===== 筆記／文件／舊版（非部署）=====
+*.docx
+HANDOFF.md
+PLAN.md
+
+# ===== 貼上的圖片 =====
+messageImage_*.jpg
+
+# ===== 所有「闇黑龍王_」開頭的衍生檔（單檔版／舊版 HTML／流程圖／筆記）=====
+闇黑龍王_*
+
+# ===== 舊版殘留素材 =====
+職業/
+default.jpg

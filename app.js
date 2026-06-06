@@ -28,6 +28,8 @@ let cur=0, editMode=false, sel=null, dirty=false, playing=false, dragNoteIdx=nul
 const app=document.getElementById('app');
 const arena=document.getElementById('arena');
 let roleEls={}, markEls=[], zoneEls=[], textEls=[];
+let zoneVis={red:true, green:true};
+try{ const zv=JSON.parse(localStorage.getItem('horntail_zonevis')||'null'); if(zv&&typeof zv==='object'){ zoneVis.red=zv.red!==false; zoneVis.green=zv.green!==false; } }catch(e){}
 const DEFAULT_BOARD=JSON.parse(JSON.stringify({STAGES,GLOBAL_ZONES}));
 const Xsvg='<svg viewBox="0 0 10 10" class="xmark"><line x1="1.6" y1="1.6" x2="8.4" y2="8.4"/><line x1="8.4" y1="1.6" x2="1.6" y2="8.4"/></svg>';
 
@@ -38,6 +40,42 @@ function migrate(){ STAGES.forEach(st=>{ const p=st.pos||(st.pos={});
   [['hero','hero2'],['fa','fa2'],['long','long2']].forEach(([base,clone])=>{ if(p[clone]){ p[base]=(p[base]||[]).concat(p[clone]); delete p[clone]; } });
 }); }
 function clearRoles(){ for(const id in roleEls) roleEls[id].remove(); roleEls={}; }
+
+/* ---------- 職業列（地圖上方・編輯模式才顯示） ---------- */
+function renderJobTray(){
+  const tray=document.getElementById('jobTray'); if(!tray) return;
+  if(!editMode){ tray.style.display='none'; tray.innerHTML=''; return; }
+  tray.style.display='flex'; tray.innerHTML='';
+  const st=STAGES[cur];
+  // 第一排：標記工具（純圖示，拖到地圖）
+  const r1=document.createElement('div'); r1.className='jt-row';
+  const l1=document.createElement('span'); l1.className='jt-lab'; l1.textContent='標記'; r1.appendChild(l1);
+  const tools=[
+    {item:'mark:O', cls:'tt-o', glyph:'',  title:'目標〇（拖到地圖）'},
+    {item:'mark:X', cls:'tt-x', glyph:'✕', title:'已斷✕（拖到地圖）'},
+    {item:'zone:smoke', cls:'tt-s', glyph:'💨', title:'下煙區（拖到地圖）'},
+    {item:'text:', cls:'tt-t', glyph:'T', title:'文字（拖到地圖後直接打字）'},
+  ];
+  tools.forEach(o=>{ const c=document.createElement('div'); c.className='jt-cell jt-tool'; c.title=o.title; c.draggable=true;
+    c.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/item',o.item); ev.dataTransfer.effectAllowed='copy'; c.classList.add('dragging'); });
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+    const p=document.createElement('span'); p.className='tt-prev '+o.cls; if(o.glyph)p.textContent=o.glyph; c.appendChild(p);
+    r1.appendChild(c); });
+  tray.appendChild(r1);
+  // 第二排：職業（純拖曳）
+  const r2=document.createElement('div'); r2.className='jt-row';
+  const l2=document.createElement('span'); l2.className='jt-lab'; l2.textContent='職業'; r2.appendChild(l2);
+  for(const k in ROLES){ const n=(st.pos[k]?st.pos[k].length:0);
+    const c=document.createElement('div'); c.className='jt-cell'+(n?' on':''); c.title=ROLES[k].n+'（拖到地圖）'; c.draggable=true;
+    c.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/role',k); ev.dataTransfer.effectAllowed='copy'; c.classList.add('dragging'); });
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+    const img=document.createElement('img'); img.src=ROLES[k].f; img.alt=ROLES[k].n; img.draggable=false; c.appendChild(img);
+    const nm=document.createElement('span'); nm.className='jt-n'; nm.textContent=ROLES[k].n; c.appendChild(nm);
+    if(n){ const b=document.createElement('span'); b.className='jt-ct'; b.textContent='×'+n; c.appendChild(b); }
+    r2.appendChild(c);
+  }
+  tray.appendChild(r2);
+}
 
 /* ---------- 進度點 + 階段軌 ---------- */
 const stepsEl=document.getElementById('steps');
@@ -60,9 +98,17 @@ function render(i){
       arena.appendChild(e); roleEls[id]=e;
       attachDrag(e,(x,y)=>{ const a=STAGES[cur].pos[o.k]; if(a&&a[o.inst]){ a[o.inst][0]=x; a[o.inst][1]=y; e.style.left=x+'%'; e.style.top=y+'%'; } },save,()=>selectRole(o.k,o.inst)); }
     e.querySelector('.nm').textContent=ROLES[o.k].n;
-    const _l=e.querySelector('.lbl'), _t=(o.xy[2]||''); _l.textContent=_t; _l.style.display=_t?'block':'none';
+    const _l=e.querySelector('.lbl'), _t=(o.xy[2]||'');
+    const _selR = !!(editMode&&sel&&sel.type==='role'&&sel.key===o.k&&sel.inst===o.inst);
+    _l.textContent=_t; _l.dataset.ph='＋備註';
+    _l.style.display=(_t||_selR)?'block':'none';
+    if(_selR){ _l.contentEditable='true'; _l.spellcheck=false; _l.classList.add('lbl-edit');
+      _l.oninput=()=>{ const a=STAGES[cur].pos[o.k]; if(a&&a[o.inst]){ a[o.inst][2]=_l.textContent; save(); } };
+      _l.onkeydown=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); _l.blur(); } e.stopPropagation(); };
+      _l.onpointerdown=(e)=>{ e.stopPropagation(); };
+    } else { _l.contentEditable='false'; _l.classList.remove('lbl-edit'); }
     e.style.left=o.xy[0]+'%'; e.style.top=o.xy[1]+'%'; e.style.opacity=1; e.style.pointerEvents=editMode?'auto':'none';
-    e.classList.toggle('sel', !!(editMode&&sel&&sel.type==='role'&&sel.key===o.k&&sel.inst===o.inst));
+    e.classList.toggle('sel', _selR);
   }
   markEls.forEach(m=>m.remove()); markEls=[];
   (st.marks||[]).forEach((m,idx)=>{ const d=document.createElement('div'); d.className='mark '+m.kind;
@@ -74,11 +120,12 @@ function render(i){
   zoneEls.forEach(z=>z.remove()); zoneEls=[];
   (st.zones||[]).forEach((z,idx)=>{ const d=document.createElement('div'); d.className='zone '+z.kind;
     d.style.left=z.x+'%'; d.style.top=z.y+'%'; d.style.width=z.w+'%'; d.style.height=z.h+'%';
-    d.innerHTML='<span>'+(z.t||'')+'</span>';
+    d.innerHTML = (z.kind==='smoke'&&!z.t) ? '<span class="zsmoke">💨</span>' : '<span>'+(z.t||'')+'</span>';
     if(editMode){ d.classList.add('editable'); if(sel&&sel.type==='zone'&&sel.index===idx) d.classList.add('sel');
       attachDrag(d,(x,y)=>{z.x=x;z.y=y;d.style.left=x+'%';d.style.top=y+'%';},save,()=>selectItem('zone',idx)); }
     arena.appendChild(d); zoneEls.push(d); });
-  GLOBAL_ZONES.forEach(z=>{ const d=document.createElement('div'); d.className='zone '+z.kind;
+  GLOBAL_ZONES.forEach(z=>{ if(z.kind==='red'&&!zoneVis.red) return; if(z.kind==='green'&&!zoneVis.green) return;
+    const d=document.createElement('div'); d.className='zone '+z.kind;
     d.style.left=z.x+'%'; d.style.top=z.y+'%'; d.style.width=z.w+'%'; d.style.height=z.h+'%';
     d.innerHTML='<span>'+(z.t||'')+'</span>';
     arena.appendChild(d); zoneEls.push(d); });
@@ -97,6 +144,7 @@ function render(i){
   mountHandle();
   placeSelBar();
   renderTitle();
+  renderJobTray();
   const ul=document.getElementById('plist'); ul.innerHTML=''; ul.classList.toggle('editing', editMode);
   (st.notes||[]).forEach((n,idx)=>{
     const li=document.createElement('li'); if(n[0]) li.className=n[0];
@@ -198,8 +246,11 @@ function addHandle(el, apply){
   const h=document.createElement('div'); h.className='rsz';
   h.addEventListener('pointerdown',e=>{ if(!editMode) return; e.preventDefault(); e.stopPropagation(); h.setPointerCapture(e.pointerId);
     const r=arena.getBoundingClientRect();
-    const move=ev=>{ const px=((ev.clientX-r.left)/r.width)*100; const py=((ev.clientY-r.top)/r.height)*100; apply(px,py,r.height,r.width); };
-    const up=()=>{ h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); save(); };
+    const bar=document.getElementById('selBar'); if(bar) bar.style.display='none';
+    let raf=0, lx=0, ly=0;
+    const flush=()=>{ raf=0; apply(lx,ly,r.height,r.width); };
+    const move=ev=>{ lx=((ev.clientX-r.left)/r.width)*100; ly=((ev.clientY-r.top)/r.height)*100; if(!raf) raf=requestAnimationFrame(flush); };
+    const up=()=>{ if(raf) cancelAnimationFrame(raf); apply(lx,ly,r.height,r.width); h.releasePointerCapture(e.pointerId); h.removeEventListener('pointermove',move); h.removeEventListener('pointerup',up); placeSelBar(); save(); };
     h.addEventListener('pointermove',move); h.addEventListener('pointerup',up); });
   el.appendChild(h);
 }
@@ -223,13 +274,14 @@ function placeSelBar(){ const bar=document.getElementById('selBar'); if(!bar) re
   bar.innerHTML='';
   const mk=(txt,fn,cls)=>{ const b=document.createElement('button'); b.className='sb'+(cls?' '+cls:''); b.textContent=txt;
     b.onpointerdown=e=>e.stopPropagation(); b.onclick=e=>{ e.stopPropagation(); fn(); }; return b; };
-  if(sel.type!=='role'&&sel.type!=='text'){ const m=mk('－',()=>resizeSel(-1)); m.title='縮小'; const p=mk('＋',()=>resizeSel(1)); p.title='放大'; bar.append(m,p); }
   if(sel.type==='text'){ const tx=STAGES[cur].texts&&STAGES[cur].texts[sel.index];
     const c=document.createElement('input'); c.type='color'; c.className='sb-col'; c.title='文字顏色'; c.value=(tx&&tx.color)||'#ffffff';
     c.onpointerdown=e=>e.stopPropagation(); c.oninput=e=>{ e.stopPropagation(); if(tx){ tx.color=c.value; const el2=selEl(); if(el2) el2.style.color=c.value; save(); } };
     bar.append(c); }
-  const d=mk('⧉',duplicateSelected,'dup'); d.title='複製一份'; const x=mk('🗑',deleteSelected,'del'); x.title='刪除';
-  bar.append(d,x);
+  if(sel.type==='zone'){ const z=STAGES[cur].zones&&STAGES[cur].zones[sel.index];
+    const e=mk('✏',()=>{ const t=prompt('區域文字（留空＝只顯示煙圖示）', (z&&z.t)||''); if(t!==null&&z){ z.t=t; render(cur); placeSelBar(); save(); } },'note'); e.title='改文字'; bar.append(e); }
+  if(sel.type!=='role'){ const d=mk('⧉',duplicateSelected,'dup'); d.title='複製一份'; bar.append(d); }
+  const x=mk('🗑',deleteSelected,'del'); x.title='刪除'; bar.append(x);
   const ar=arena.getBoundingClientRect(), r=el.getBoundingClientRect();
   const above=(r.top-ar.top)>42;
   bar.classList.toggle('below',!above);
@@ -246,7 +298,18 @@ function refreshSel(){
   markEls.forEach((el,i)=>el.classList.toggle('sel', !!(sel&&sel.type==='mark'&&sel.index===i)));
   zoneEls.forEach((el,i)=>el.classList.toggle('sel', !!(sel&&sel.type==='zone'&&sel.index===i)));
   textEls.forEach((el,i)=>el.classList.toggle('sel', !!(sel&&sel.type==='text'&&sel.index===i)));
-  for(const id in roleEls){ const el=roleEls[id]; el.classList.toggle('sel', !!(sel&&sel.type==='role'&&sel.key===el.dataset.k&&+el.dataset.inst===sel.inst)); }
+  for(const id in roleEls){ const el=roleEls[id];
+    const on = !!(sel&&sel.type==='role'&&sel.key===el.dataset.k&&+el.dataset.inst===sel.inst);
+    el.classList.toggle('sel', on);
+    const _l=el.querySelector('.lbl'); if(_l){ const _t=_l.textContent;
+      _l.style.display=(_t||on)?'block':'none';
+      if(on){ _l.contentEditable='true'; _l.classList.add('lbl-edit'); _l.dataset.ph='＋備註';
+        const k=el.dataset.k, inst=+el.dataset.inst;
+        _l.oninput=()=>{ const a=STAGES[cur].pos[k]; if(a&&a[inst]){ a[inst][2]=_l.textContent; save(); } };
+        _l.onkeydown=(e)=>{ if(e.key==='Enter'){ e.preventDefault(); _l.blur(); } e.stopPropagation(); };
+        _l.onpointerdown=(e)=>{ e.stopPropagation(); };
+      }
+      else { _l.contentEditable='false'; _l.classList.remove('lbl-edit'); } } }
   mountHandle(); renderEditor(); placeSelBar();
 }
 function clamp01(v){ return Math.max(0,Math.min(100,+(+v).toFixed(1))); }
@@ -277,9 +340,16 @@ function initArenaDrop(){ if(arenaDropInit) return; arenaDropInit=true;
   arena.addEventListener('dragover',ev=>{ if(editMode){ ev.preventDefault(); ev.dataTransfer.dropEffect='copy'; arena.classList.add('drop-on'); } });
   arena.addEventListener('dragleave',()=>arena.classList.remove('drop-on'));
   arena.addEventListener('drop',ev=>{ arena.classList.remove('drop-on'); if(!editMode) return;
-    const k=ev.dataTransfer.getData('text/role'); if(!k||!ROLES[k]) return; ev.preventDefault();
     const r=arena.getBoundingClientRect(); const x=clamp01((ev.clientX-r.left)/r.width*100); const y=clamp01((ev.clientY-r.top)/r.height*100);
-    const st2=STAGES[cur]; (st2.pos[k]=st2.pos[k]||[]).push([x,y]); sel={type:'role',key:k,inst:st2.pos[k].length-1}; render(cur); renderEditor(); save(); showToast(ROLES[k].n+' 已放到 '+x+'%, '+y+'%'); });
+    const st2=STAGES[cur];
+    const k=ev.dataTransfer.getData('text/role');
+    if(k&&ROLES[k]){ ev.preventDefault(); (st2.pos[k]=st2.pos[k]||[]).push([x,y]); sel={type:'role',key:k,inst:st2.pos[k].length-1}; render(cur); renderEditor(); save(); showToast(ROLES[k].n+' 已放置'); return; }
+    const item=ev.dataTransfer.getData('text/item'); if(!item) return; ev.preventDefault();
+    if(item==='mark:O'){ (st2.marks=st2.marks||[]).push({kind:'O',x,y,r:4}); sel={type:'mark',index:st2.marks.length-1}; render(cur); renderEditor(); save(); }
+    else if(item==='mark:X'){ (st2.marks=st2.marks||[]).push({kind:'X',x,y,r:4}); sel={type:'mark',index:st2.marks.length-1}; render(cur); renderEditor(); save(); }
+    else if(item==='zone:smoke'){ (st2.zones=st2.zones||[]).push({kind:'smoke',x,y,w:15,h:15,t:''}); sel={type:'zone',index:st2.zones.length-1}; render(cur); renderEditor(); save(); }
+    else if(item==='text:'){ (st2.texts=st2.texts||[]).push({x,y,t:'文字',size:22,color:'#ffffff'}); sel={type:'text',index:st2.texts.length-1}; render(cur); renderEditor(); save(); focusSelText(true); }
+  });
 }
 function selSizeCtl(){ const w=document.createElement('div'); w.className='sel-ctl';
   const l=document.createElement('span'); l.className='lab'; l.textContent='大小';
@@ -291,92 +361,106 @@ function selMoveCtl(){ const w=document.createElement('div'); w.className='sel-c
   [['◀','ArrowLeft'],['▲','ArrowUp'],['▼','ArrowDown'],['▶','ArrowRight']].forEach(([t,kk])=>{ const bb=document.createElement('button'); bb.textContent=t; bb.title='移動'; bb.onclick=()=>nudgeSel(kk,1); pad.appendChild(bb); });
   w.append(l,pad); return w; }
 function renderEditor(){
-  if(!editMode) return;
-  const st=STAGES[cur]; const box=document.getElementById('editor'); box.innerHTML='';
+  updateHistBtns();
+  const box=document.getElementById('editor'); if(!box) return;
+  if(!editMode){ box.style.display='none'; box.innerHTML=''; return; }
+  const st=STAGES[cur]; box.style.display='flex'; box.innerHTML='';
 
-  // 標題列
-  const head=document.createElement('div'); head.className='ed-head';
-  head.innerHTML='<div class="ed-title"><span class="ed-ico">🛠</span>排站位編輯器</div>'
-    +'<div class="ed-hint">拖曳職業／標記移動　·　方向鍵微調（Shift 大步）　·　Delete 刪除、Ctrl+D 複製　·　Esc 取消選取</div>';
-  const tools=document.createElement('div'); tools.className='ed-tools';
-  const ub=ebtn('↩︎ 復原',undo,'ed-tool'); ub.id='undoBtn'; ub.disabled=!undoStack.length;
-  const rb=ebtn('↪︎ 重做',redo,'ed-tool'); rb.id='redoBtn'; rb.disabled=!redoStack.length;
-  const done=document.createElement('button'); done.className='ed-done'; done.textContent='✓ 完成編輯'; done.onclick=()=>setEdit(false);
-  tools.append(ub,rb,done); head.appendChild(tools); box.appendChild(head);
-
-  const grid=document.createElement('div'); grid.className='ed-grid'; box.appendChild(grid);
-  function sec(badge,title,hint,opts){ opts=opts||{};
-    const w=document.createElement('div'); w.className='ed-sec'+(opts.wide?' wide':'')+(opts.sel?' sel-sec':'');
-    const h=document.createElement('div'); h.className='ed-sec-h';
-    h.innerHTML='<span class="ed-badge">'+badge+'</span><span class="ed-sec-t">'+title+'</span>';
-    w.appendChild(h);
-    if(hint){ const hh=document.createElement('div'); hh.className='ed-sec-hint'; hh.textContent=hint; w.appendChild(hh); }
-    const b=document.createElement('div'); b.className='ed-row'+(opts.col?' col':''); w.appendChild(b);
-    grid.appendChild(w); return b;
-  }
-
-  // ① 本階段
-  const b1=sec('1','本階段','標題請直接點右側大標修改；這裡改代表色、調整流程順序');
-  const cl=document.createElement('div'); cl.className='sel-ctl';
-  const cll=document.createElement('span'); cll.className='lab'; cll.textContent='代表色';
-  const col=document.createElement('input'); col.type='color'; col.value=toHex(st.color); col.title='階段代表色';
-  col.oninput=()=>{ st.color=col.value; renderTitle(); save(); };
-  cl.append(cll,col);
-  b1.append(cl,
-    ebtn('⧉ 複製這頁',dupStage,'b-move'), ebtn('＋ 新增一頁',addStage,'b-add'), ebtn('🗑 刪除這頁',delStage,'b-del'),
-    ebtn('◀ 上移',()=>moveStage(-1),'b-move'), ebtn('▶ 下移',()=>moveStage(1),'b-move'), ebtn('↻ 還原預設範本',resetBoard,'b-del'));
-
-  // ② 職業站位
+  // 啟用地圖拖放（上方工具列拖入 O／X／煙／文字／職業）
   initArenaDrop();
-  const b2=sec('2','職業站位','點 ＋ 放到場上中央，或把圖示直接拖到地圖定位；同職業可放多個（×2），點 － 移除。');
-  const jwrap=document.createElement('div'); jwrap.className='jchips'; b2.appendChild(jwrap);
-  for(const k in ROLES){ const n=(st.pos[k]?st.pos[k].length:0);
-    const c=document.createElement('div'); c.className='jchip'+(n?' on':'');
-    const ic=document.createElement('img'); ic.className='jchip-ic'; ic.src=ROLES[k].f; ic.alt=ROLES[k].n; ic.draggable=true; ic.title='拖到地圖放置';
-    ic.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/role',k); ev.dataTransfer.effectAllowed='copy'; });
-    const nm2=document.createElement('span'); nm2.className='jchip-n'; nm2.textContent=ROLES[k].n;
-    c.append(ic,nm2);
-    if(n>1){ const ct=document.createElement('span'); ct.className='jchip-ct'; ct.textContent='×'+n; c.appendChild(ct); }
-    const sp=document.createElement('div'); sp.className='jchip-sp';
-    const minus=document.createElement('button'); minus.className='jchip-b minus'; minus.textContent='－'; minus.title='移除一個'; minus.disabled=!n;
-    minus.onclick=()=>{ if(st.pos[k]&&st.pos[k].length){ st.pos[k].pop(); if(!st.pos[k].length) delete st.pos[k]; render(cur); renderEditor(); save(); } };
-    const plus=document.createElement('button'); plus.className='jchip-b plus'; plus.textContent='＋'; plus.title='放到場上';
-    plus.onclick=()=>{ (st.pos[k]=st.pos[k]||[]).push([50,50]); sel={type:'role',key:k,inst:st.pos[k].length-1}; render(cur); renderEditor(); save(); };
-    sp.append(minus,plus); c.appendChild(sp);
-    jwrap.appendChild(c); }
+  if(sel&&sel.type==='role'){ const arr=st.pos[sel.key]; if(!arr||!arr[sel.inst]) sel=null; }
+  else if(sel&&sel.type==='text'){ const arr=st.texts; if(!(arr&&arr[sel.index])) sel=null; }
+  else if(sel){ const arr=sel.type==='mark'?st.marks:st.zones; if(!(arr&&arr[sel.index])) sel=null; }
 
-  // ③ 場上標記
-  const b3=sec('3','場上標記','點一下加到場中央，再拖到定位；選取後可用「大小／位置」按鈕或方向鍵微調。');
-  function mkTile(cls,glyph,label,fn,title){ const t=document.createElement('button'); t.className='mk-tile'; t.onclick=fn; if(title)t.title=title;
-    const p=document.createElement('span'); p.className='mk-prev '+cls; if(glyph)p.textContent=glyph; t.append(p);
-    if(label){ const l=document.createElement('span'); l.textContent=label; t.append(l); } return t; }
-  b3.append(
-    mkTile('o','','',()=>{ (st.marks=st.marks||[]).push({kind:'O',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); },'加目標〇'),
-    mkTile('x','✕','',()=>{ (st.marks=st.marks||[]).push({kind:'X',x:50,y:50,r:4}); sel={type:'mark',index:st.marks.length-1}; render(cur); renderEditor(); save(); },'加已斷✕'),
-    mkTile('s','','下煙區',()=>{ (st.zones=st.zones||[]).push({kind:'smoke',x:50,y:50,w:15,h:15,t:'下煙區'}); sel={type:'zone',index:st.zones.length-1}; render(cur); renderEditor(); save(); }),
-    mkTile('t','T','文字',()=>{ (st.texts=st.texts||[]).push({x:50,y:50,t:'文字',size:22,color:'#ffffff'}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); focusSelText(true); }));
-  b3.append(ebtn('＋ 階段大標到圖上',()=>{ (st.texts=st.texts||[]).push({x:50,y:8,t:st.name,size:40,color:'#ffffff'}); sel={type:'text',index:st.texts.length-1}; render(cur); renderEditor(); save(); showToast('已把階段標題放到圖上，可拖曳／改字級'); },'b-move'));
-
-  // ★ 已選取（依選取類型顯示，含滑鼠也能調的控制）
-  if(sel&&sel.type==='role'){ const arr=st.pos[sel.key];
-    if(arr&&arr[sel.inst]){ const b=sec('★','已選取職業：'+(ROLES[sel.key]?ROLES[sel.key].n:''),'可加備註（顯示在圖示下方）；用「位置」按鈕或方向鍵移動',{sel:true});
-      const li=document.createElement('input'); li.type='text'; li.placeholder='備註／角色名（可空白）'; li.style.minWidth='170px'; li.value=(arr[sel.inst][2]||'');
-      li.oninput=()=>{ arr[sel.inst][2]=li.value; render(cur); save(); };
-      b.append(li, selMoveCtl(), ebtn('⧉ 複製',duplicateSelected,'b-move'), ebtn('🗑 從場上移除',()=>{ arr.splice(sel.inst,1); if(!arr.length) delete st.pos[sel.key]; sel=null; render(cur); renderEditor(); save(); },'b-del'));
-    } else sel=null;
-  } else if(sel&&sel.type==='text'){ const arr=st.texts; const obj=arr&&arr[sel.index];
-    if(!obj) sel=null; /* 文字改為直接在地圖方塊上編輯：點兩下打字、浮動工具列調色與大小、邊角拖曳縮放 */
-  } else if(sel){ const arr=sel.type==='mark'?st.marks:st.zones; const obj=arr&&arr[sel.index];
-    if(obj){ const title=sel.type==='mark'?(obj.kind==='O'?'目標':'已斷'):'下煙區';
-      const b=sec('★','已選取：'+title, '調整大小與位置；或用圖上的浮動工具列', {sel:true});
-      if(sel.type==='zone') b.append(ebtn('改文字',()=>{ const t=prompt('區域文字',obj.t||''); if(t!==null){obj.t=t; render(cur); save();} },'b-move'));
-      b.append(selSizeCtl(), selMoveCtl(), ebtn('⧉ 複製',duplicateSelected,'b-move'), ebtn('🗑 刪除',()=>{ arr.splice(sel.index,1); sel=null; render(cur); renderEditor(); save(); },'b-del'));
-    } else sel=null; }
-
-  // ④ 存檔・分享（階段說明已移到右側面板直接編輯）
-  const b5=sec('4','存檔・分享','存成 JSON 長期保存；分享連結為「唯讀」，隊友只能看不能改');
-  b5.append( ebtn('💾 存檔',saveToFile,'b-prime'), ebtn('📂 讀取',()=>document.getElementById('importFile').click(),'b-file'), ebtn('🔗 複製分享連結',shareLink,'b-file') );
+  // 輕量階段條：代表色 + 頁面管理（就在切換階段的地方管理階段）
+  const lab=document.createElement('span'); lab.className='stb-lab'; lab.textContent='這一階段';
+  const cw=document.createElement('label'); cw.className='stb-color'; cw.title='階段代表色';
+  const col=document.createElement('input'); col.type='color'; col.value=toHex(st.color);
+  col.oninput=()=>{ st.color=col.value; renderTitle(); save(); };
+  cw.append('🎨', col);
+  function sbtn(txt,fn,cls){ const b=document.createElement('button'); b.type='button'; b.className='stb-btn'+(cls?' '+cls:''); b.textContent=txt; b.onclick=fn; return b; }
+  const grp=document.createElement('div'); grp.className='stb-grp';
+  grp.append(
+    sbtn('＋ 新增頁',addStage),
+    sbtn('⧉ 複製頁',dupStage),
+    sbtn('⤵ 沿用上一階段站位',inheritPrev,'wide'),
+    sbtn('◀ 上移',()=>moveStage(-1)),
+    sbtn('下移 ▶',()=>moveStage(1)),
+    sbtn('🗑 刪除頁',delStage,'danger'));
+  const reset=sbtn('↻ 還原範本',resetBoard,'ghost');
+  box.append(lab, cw, grp, reset);
   save();
+}
+
+/* ---------- 匯出 PNG ---------- */
+function roundRectPath(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+async function drawStageCanvas(idx, withTitle){
+  const mapImg=arena.querySelector('.map'); const rect=arena.getBoundingClientRect();
+  const ar=(mapImg&&mapImg.naturalWidth&&mapImg.naturalHeight)?mapImg.naturalWidth/mapImg.naturalHeight:(rect.width/rect.height);
+  const W=1400, MH=Math.round(W/ar), sc=W/rect.width;
+  const TH= withTitle ? Math.round(54*sc/2.86) : 0; // 標題列高度（依比例）
+  const titleH = withTitle ? 46 : 0;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=MH+titleH; const g=cv.getContext('2d');
+  if(withTitle){ g.fillStyle='#0e1726'; g.fillRect(0,0,W,titleH);
+    g.fillStyle='#e8eef6'; g.font='900 24px "Noto Sans TC",sans-serif'; g.textAlign='left'; g.textBaseline='middle';
+    g.fillText((idx)+'　'+(STAGES[idx].name||''), 18, titleH/2); }
+  const oy=titleH;
+  const PX=p=>p/100*W, PY=p=>p/100*MH+oy;
+  try{ g.drawImage(mapImg,0,oy,W,MH); }catch(e){ g.fillStyle='#0b1320'; g.fillRect(0,oy,W,MH); }
+  const st=STAGES[idx];
+  const zones=[]; GLOBAL_ZONES.forEach(z=>{ if(z.kind==='red'&&!zoneVis.red)return; if(z.kind==='green'&&!zoneVis.green)return; zones.push(z); }); (st.zones||[]).forEach(z=>zones.push(z));
+  zones.forEach(z=>{ const w=z.w/100*W,h=z.h/100*MH,x=PX(z.x)-w/2,y=PY(z.y)-h/2;
+    let fill,stroke,dash=false;
+    if(z.kind==='red'){fill='rgba(232,90,79,.18)';stroke='#e8645c';}
+    else if(z.kind==='green'){fill='rgba(95,184,120,.18)';stroke='#3fae54';}
+    else {fill='rgba(120,130,140,.20)';stroke='#aebccb';dash=true;}
+    g.fillStyle=fill; g.fillRect(x,y,w,h);
+    g.lineWidth=2*sc; g.strokeStyle=stroke; if(dash)g.setLineDash([7*sc,5*sc]); g.strokeRect(x,y,w,h); g.setLineDash([]);
+    g.textAlign='center';
+    if(z.kind==='smoke'&&!z.t){ g.textBaseline='middle'; g.font=(26*sc)+'px sans-serif'; g.fillText('💨',PX(z.x),PY(z.y)); }
+    else if(z.t){ g.textBaseline='top'; g.font='800 '+(13*sc)+'px "Noto Sans TC",sans-serif'; g.fillStyle='#fff'; g.fillText(z.t,PX(z.x),y+4*sc); }
+  });
+  (st.marks||[]).forEach(m=>{ const cx=PX(m.x),cy=PY(m.y),rr=m.r/100*W;
+    if(m.kind==='O'){ g.beginPath(); g.arc(cx,cy,rr,0,Math.PI*2); g.lineWidth=3.5*sc; g.strokeStyle='#ffc83d'; g.stroke(); }
+    else { g.strokeStyle='#ff5a4f'; g.lineWidth=3.2*sc; g.lineCap='round'; const d=rr*0.72; g.beginPath(); g.moveTo(cx-d,cy-d); g.lineTo(cx+d,cy+d); g.moveTo(cx+d,cy-d); g.lineTo(cx-d,cy+d); g.stroke(); }
+  });
+  (st.texts||[]).forEach(tx=>{ g.font='900 '+((tx.size||22)*sc)+'px "Noto Sans TC",sans-serif'; g.fillStyle=tx.color||'#fff';
+    g.textAlign='center'; g.textBaseline='middle'; g.shadowColor='rgba(0,0,0,.75)'; g.shadowBlur=4*sc; g.fillText(tx.t||'',PX(tx.x),PY(tx.y)); g.shadowBlur=0; });
+  const tasks=[]; for(const k in st.pos){ (st.pos[k]||[]).forEach(p=>tasks.push({k,x:p[0],y:p[1],lbl:p[2]})); }
+  await Promise.all(tasks.map(t=>new Promise(res=>{ const im=new Image(); im.onload=()=>{t.img=im;res();}; im.onerror=()=>res(); im.src=ROLES[t.k]?ROLES[t.k].f:''; })));
+  const AV=42*sc, R=9*sc;
+  tasks.forEach(t=>{ const cx=PX(t.x),cy=PY(t.y),x=cx-AV/2,y=cy-AV/2;
+    if(t.img){ g.save(); roundRectPath(g,x,y,AV,AV,R); g.clip(); g.drawImage(t.img,x,y,AV,AV); g.restore(); g.lineWidth=2.2*sc; g.strokeStyle='#fff'; roundRectPath(g,x,y,AV,AV,R); g.stroke(); }
+    const nm=ROLES[t.k]?ROLES[t.k].n:''; g.textAlign='center'; g.textBaseline='top'; g.shadowColor='#000'; g.shadowBlur=3*sc;
+    g.font='800 '+(12*sc)+'px "Noto Sans TC",sans-serif'; g.fillStyle='#fff'; g.fillText(nm,cx,y+AV+2*sc);
+    if(t.lbl){ g.fillStyle='#ffd479'; g.font='800 '+(11*sc)+'px "Noto Sans TC",sans-serif'; g.fillText(t.lbl,cx,y+AV+2*sc+14*sc); }
+    g.shadowBlur=0;
+  });
+  return cv;
+}
+function canvasToBlob(cv){ return new Promise(res=>{ try{ cv.toBlob(res,'image/png'); }catch(e){ res(null); } }); }
+const TAINT_MSG='產生圖片失敗：圖片受瀏覽器安全限制（多檔在本機 file:// 直接開會這樣）。請改用「單檔版」，或上傳到 GitHub Pages 後再試。';
+async function exportPNG(){
+  const cv=await drawStageCanvas(cur,false); const blob=await canvasToBlob(cv);
+  if(!blob){ alert(TAINT_MSG); return; }
+  try{ if(navigator.clipboard && window.ClipboardItem){ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('已複製圖片，可直接貼到 LINE／Discord'); return; } }catch(e){}
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='闇黑龍王_'+(shortName(STAGES[cur].name)||cur)+'.png'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  showToast('瀏覽器不支援複製圖片，已改為下載');
+}
+async function exportAllPNG(){
+  showToast('合成全部階段圖片中…');
+  const canvases=[]; for(let i=0;i<STAGES.length;i++){ canvases.push(await drawStageCanvas(i,true)); }
+  const W=Math.max.apply(null,canvases.map(c=>c.width));
+  const totalH=canvases.reduce((s,c)=>s+c.height,0)+ (canvases.length-1)*8;
+  const big=document.createElement('canvas'); big.width=W; big.height=totalH; const g=big.getContext('2d');
+  g.fillStyle='#0b1320'; g.fillRect(0,0,W,totalH);
+  let y=0; canvases.forEach(c=>{ g.drawImage(c,0,y); y+=c.height+8; });
+  const blob=await canvasToBlob(big);
+  if(!blob){ alert(TAINT_MSG); return; }
+  try{ if(navigator.clipboard && window.ClipboardItem){ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); showToast('已複製全部階段（合成一張長圖），可直接貼上'); return; } }catch(e){}
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='闇黑龍王_全部階段.png'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  showToast('瀏覽器不支援複製，已改為下載長圖');
 }
 
 /* ---------- 檔案 / 分享 ---------- */
@@ -402,9 +486,23 @@ document.getElementById('importFile').onchange=ev=>{ const f=ev.target.files[0];
   rd.readAsText(f); ev.target.value=''; };
 function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64dec(b){ return decodeURIComponent(escape(atob(b))); }
-function parseHash(){ const m=(location.hash||'').match(/^#(view|data)=(.+)$/); if(!m) return null; try{ return {mode:m[1], board:JSON.parse(b64dec(m[2]))}; }catch(e){ return null; } }
-function shareLink(){ const json=JSON.stringify({version:1,STAGES,GLOBAL_ZONES}); const url=location.origin+location.pathname+'#view='+b64enc(json);
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(()=>showToast('唯讀分享連結已複製'),()=>prompt('複製此唯讀連結：',url)); } else prompt('複製此唯讀連結：',url); }
+function bytesToB64url(bytes){ let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+function b64urlToBytes(s){ s=s.replace(/-/g,'+').replace(/_/g,'/'); while(s.length%4) s+='='; const bin=atob(s); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) a[i]=bin.charCodeAt(i); return a; }
+async function gzipStr(str){ const cs=new CompressionStream('gzip'); const ab=await new Response(new Blob([new TextEncoder().encode(str)]).stream().pipeThrough(cs)).arrayBuffer(); return new Uint8Array(ab); }
+async function gunzipBytes(bytes){ const ds=new DecompressionStream('gzip'); const ab=await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer(); return new TextDecoder().decode(ab); }
+async function resolveHash(){ const h=location.hash||'';
+  let m=h.match(/^#(vz|dz)=(.+)$/);
+  if(m){ try{ const json=await gunzipBytes(b64urlToBytes(m[2])); return {mode:m[1]==='vz'?'view':'data', board:JSON.parse(json)}; }catch(e){ return null; } }
+  m=h.match(/^#(view|data)=(.+)$/);
+  if(m){ try{ return {mode:m[1], board:JSON.parse(b64dec(m[2]))}; }catch(e){ return null; } }
+  return null;
+}
+async function shareLink(){ const json=JSON.stringify({version:1,STAGES,GLOBAL_ZONES}); const base=location.origin+location.pathname;
+  let url=null;
+  try{ if(window.CompressionStream){ const z=await gzipStr(json); const enc=bytesToB64url(z); if(enc.length < b64enc(json).length) url=base+'#vz='+enc; } }catch(e){}
+  if(!url) url=base+'#view='+b64enc(json);
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(()=>showToast('唯讀分享連結已複製'+(url.indexOf('#vz=')>0?'（已壓縮縮短）':'')),()=>prompt('複製此唯讀連結：',url)); } else prompt('複製此唯讀連結：',url);
+}
 
 /* ---------- 存稿 + 復原/重做 ---------- */
 let saveTimer=null, undoStack=[], redoStack=[], lastSnap=null, restoring=false;
@@ -439,6 +537,8 @@ const helpEl=document.getElementById('help');
 function openHelp(){ helpEl.classList.add('show'); }
 function closeHelp(){ helpEl.classList.remove('show'); }
 document.getElementById('helpBtn').onclick=openHelp;
+document.getElementById('undoBtn').onclick=undo;
+document.getElementById('redoBtn').onclick=redo;
 document.getElementById('helpClose').onclick=closeHelp;
 helpEl.addEventListener('click',e=>{ if(e.target===helpEl) closeHelp(); });
 function applyBoard(o){ if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); } if(Array.isArray(o.GLOBAL_ZONES)){ GLOBAL_ZONES.length=0; o.GLOBAL_ZONES.forEach(z=>GLOBAL_ZONES.push(z)); } }
@@ -446,6 +546,13 @@ function loadSaved(){ try{ const s=localStorage.getItem('horntail_board'); if(s)
 
 /* ---------- 階段管理 ---------- */
 function deepCopy(o){ return JSON.parse(JSON.stringify(o)); }
+function inheritPrev(){ if(cur<=0){ showToast('已是第一階段，沒有上一階段可沿用'); return; }
+  const prev=STAGES[cur-1], st=STAGES[cur];
+  const had=Object.keys(st.pos||{}).length;
+  if(had && !confirm('用「上一階段」的職業站位覆蓋這一階段？（標記與說明不變）')) return;
+  st.pos=deepCopy(prev.pos||{});
+  sel=null; render(cur); renderEditor(); save(); showToast('已沿用上一階段站位');
+}
 function dupStage(){ const c=deepCopy(STAGES[cur]); c.name=(c.name||'')+' (複製)'; STAGES.splice(cur+1,0,c); cur=cur+1; rebuildSteps(); render(cur); renderEditor(); save(); }
 function addStage(){ STAGES.splice(cur+1,0,{name:'新階段',color:'#38bdf8',marks:[],zones:[],pos:{},notes:[['','說明']]}); cur=cur+1; rebuildSteps(); render(cur); renderEditor(); save(); }
 function delStage(){ if(STAGES.length<=1){ showToast('至少保留一個階段'); return; } if(!confirm('刪除目前階段？')) return; STAGES.splice(cur,1); cur=Math.max(0,Math.min(cur,STAGES.length-1)); sel=null; rebuildSteps(); render(cur); renderEditor(); save(); }
@@ -462,22 +569,39 @@ function setEdit(on){ editMode=on; app.classList.toggle('edit',on);
   showToast(on?'已進入編輯模式：拖曳圖示移動、點物件可調整':'已切回檢視模式'); }
 modeSwitch.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ if((b.dataset.mode==='edit')!==editMode) setEdit(b.dataset.mode==='edit'); }; });
 document.getElementById('shareBtn').onclick=shareLink;
+document.getElementById('pngBtn').onclick=exportPNG;
+document.getElementById('pngAllBtn').onclick=exportAllPNG;
+(function(){
+  const rb=document.getElementById('toggleRed'), gb=document.getElementById('toggleGreen');
+  function sync(){ rb.classList.toggle('on',zoneVis.red); rb.setAttribute('aria-pressed',zoneVis.red);
+    gb.classList.toggle('on',zoneVis.green); gb.setAttribute('aria-pressed',zoneVis.green);
+    try{ localStorage.setItem('horntail_zonevis',JSON.stringify(zoneVis)); }catch(e){} }
+  rb.onclick=()=>{ zoneVis.red=!zoneVis.red; sync(); render(cur); };
+  gb.onclick=()=>{ zoneVis.green=!zoneVis.green; sync(); render(cur); };
+  sync();
+})();
+document.getElementById('saveBtn').onclick=saveToFile;
+document.getElementById('loadBtn').onclick=()=>document.getElementById('importFile').click();
 window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
 arena.addEventListener('pointerdown',e=>{ if(editMode && (e.target===arena||e.target.classList.contains('map')) && sel){ sel=null; refreshSel(); } });
 
 /* ---------- 啟動 ---------- */
 let readOnly=false;
 try{ applySkin(localStorage.getItem('horntail_skin')||'skin-b'); }catch(e){ applySkin('skin-b'); }
-const _hash=parseHash();
-if(_hash&&_hash.board&&Array.isArray(_hash.board.STAGES)){ applyBoard(_hash.board); readOnly=(_hash.mode==='view'); }
-else { loadSaved(); }
-if(readOnly){ modeSwitch.style.display='none'; document.getElementById('shareBtn').style.display='none'; app.classList.add('readonly'); }
-migrate();
-rebuildSteps();
-lastSnap=boardJSON();
 (function(){ const el=document.getElementById('ptName');
   el.addEventListener('input',()=>{ if(!editMode) return; STAGES[cur].name=el.textContent; save(); });
   el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
   el.addEventListener('blur',()=>{ if(editMode) renderEditor(); });
 })();
-go(0);
+(async function boot(){
+  const _hash=await resolveHash();
+  if(_hash&&_hash.board&&Array.isArray(_hash.board.STAGES)){ applyBoard(_hash.board); readOnly=(_hash.mode==='view'); }
+  else { loadSaved(); }
+  if(readOnly){ modeSwitch.style.display='none'; document.getElementById('shareBtn').style.display='none'; app.classList.add('readonly');
+    const bt=document.querySelector('.brand-tx'); if(bt){ const tag=document.createElement('span'); tag.className='ro-badge'; tag.textContent='🔒 唯讀檢視'; bt.appendChild(tag); }
+  }
+  migrate();
+  rebuildSteps();
+  lastSnap=boardJSON();
+  go(0);
+})();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>闇黑龍王 互動攻略</title>
+<title>闇黑龍王 戰術板</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&family=Noto+Serif+TC:wght@700;900&family=Ma+Shan+Zheng&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
@@ -19,8 +19,7 @@
     <div class="brand">
       <span class="brand-ico">🐲</span>
       <div class="brand-tx">
-        <div class="title">闇黑龍王 互動攻略</div>
-        <div class="sub">逐階段走位 ・ 〇 目標　✕ 已斷　灰框 下煙</div>
+        <div class="title">闇黑龍王 戰術板</div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -34,32 +33,35 @@
         <button data-skin="skin-a" type="button" title="戰術風">2</button>
         <button data-skin="skin-c" type="button" title="寶典風">3</button>
       </div>
-      <button class="hbtn" id="helpBtn" type="button" title="操作說明">？</button>
-      <button class="hbtn" id="shareBtn" type="button">🔗 分享</button>
+      <button class="hbtn ic" id="helpBtn" type="button" title="操作說明">？</button>
+      <button class="hbtn ic" id="pngBtn" type="button" title="複製這一階段圖片（貼到 LINE／Discord）">📋</button>
+      <button class="hbtn ic" id="pngAllBtn" type="button" title="複製全部階段（合成一張長圖）">🗂</button>
+      <button class="hbtn ic edit-only" id="saveBtn" type="button" title="存成 JSON 檔">💾</button>
+      <button class="hbtn ic edit-only" id="loadBtn" type="button" title="讀取 JSON 檔">📂</button>
+      <button class="hbtn ic edit-only" id="undoBtn" type="button" title="復原 (Ctrl+Z)">↩︎</button>
+      <button class="hbtn ic edit-only" id="redoBtn" type="button" title="重做 (Ctrl+Shift+Z)">↪︎</button>
+      <button class="hbtn ic" id="shareBtn" type="button" title="複製唯讀分享連結">🔗</button>
     </div>
   </div>
 
-  <div class="rule"><b>⚠ 鐵則</b>　尾巴一定要「最先」斷！其他部位先斷 = 挑戰失敗</div>
-
   <div class="main">
     <div class="arena-col">
+      <div class="job-tray" id="jobTray" aria-label="職業列：拖到地圖放置"></div>
       <div class="arena" id="arena">
         <img class="map" src="assets/map.jpg" alt="闇黑龍王地圖" draggable="false">
         <div class="wm">作者：Artale繁中服-爸爸</div>
         <div id="selBar" class="sel-bar"></div>
       </div>
-      <div class="legend">
-        <span class="lg lg-o">〇 目標</span>
-        <span class="lg lg-x">✕ 已斷</span>
-        <span class="lg lg-r">紅框 危險</span>
-        <span class="lg lg-g">綠框 安全</span>
-        <span class="lg lg-s">灰框 下煙</span>
+      <div class="zone-toggles">
+        <button class="zt-btn red on" id="toggleRed" type="button" aria-pressed="true"><span class="zt-sw"></span>危險區</button>
+        <button class="zt-btn green on" id="toggleGreen" type="button" aria-pressed="true"><span class="zt-sw"></span>安全區</button>
       </div>
       <div class="ctrl">
         <button class="cbtn" id="prev" type="button">◀ 上一階段</button>
         <div class="steps" id="steps"></div>
         <button class="cbtn next" id="next" type="button">下一階段 ▶</button>
       </div>
+      <div id="editor" class="stage-bar"></div>
     </div>
 
     <div class="panel">
@@ -72,7 +74,6 @@
     </div>
   </div>
 
-  <div id="editor"></div>
   <input type="file" id="importFile" accept="application/json" style="display:none">
 </div>
 <div id="toast"></div>
