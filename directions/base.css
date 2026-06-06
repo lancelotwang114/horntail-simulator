@@ -14,6 +14,9 @@
 .hbtn.ic{ padding:7px 10px; font-size:15px; line-height:1; }
 .hbtn.edit-only{ display:none; }
 #app.edit .hbtn.edit-only{ display:inline-flex; align-items:center; }
+/* 存檔：跨主題的醒目綠，引導非技術使用者 */
+.hbtn.primary{ background:linear-gradient(180deg,#34d399,#10b981)!important; border-color:#0e9f6e!important; color:#04231a!important; }
+.hbtn.primary:hover{ filter:brightness(1.07); }
 
 /* rule banner */
 .rule{ font-size:13.5px; font-weight:700; padding:9px 16px; border-radius:10px; text-align:center; }

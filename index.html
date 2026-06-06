@@ -19,7 +19,7 @@
     <div class="brand">
       <span class="brand-ico">🐲</span>
       <div class="brand-tx">
-        <div class="title">闇黑龍王 戰術板 <span class="ver" style="font-size:.6em;opacity:.55;font-weight:700;letter-spacing:.5px;">v1.0</span></div>
+        <div class="title">闇黑龍王 戰術板 <span class="ver" style="font-size:.6em;opacity:.55;font-weight:700;letter-spacing:.5px;">v1.1</span></div>
       </div>
     </div>
     <div class="hdr-actions">
@@ -36,11 +36,11 @@
       <button class="hbtn ic" id="helpBtn" type="button" title="操作說明">？</button>
       <button class="hbtn ic" id="pngBtn" type="button" title="複製這一階段圖片（貼到 LINE／Discord）">📋</button>
       <button class="hbtn ic" id="pngAllBtn" type="button" title="複製全部階段（合成一張長圖）">🗂</button>
-      <button class="hbtn ic edit-only" id="saveBtn" type="button" title="存成 JSON 檔">💾</button>
-      <button class="hbtn ic edit-only" id="loadBtn" type="button" title="讀取 JSON 檔">📂</button>
+      <button class="hbtn edit-only primary" id="saveBtn" type="button" title="存成檢視版 HTML（雙擊就能看；之後回來可再讀取續編）">💾 存檔</button>
+      <button class="hbtn edit-only" id="loadBtn" type="button" title="讀取檔案（.html 或 .json）繼續編輯">📂 讀取</button>
       <button class="hbtn ic edit-only" id="undoBtn" type="button" title="復原 (Ctrl+Z)">↩︎</button>
       <button class="hbtn ic edit-only" id="redoBtn" type="button" title="重做 (Ctrl+Shift+Z)">↪︎</button>
-      <button class="hbtn ic" id="shareBtn" type="button" title="複製唯讀分享連結">🔗</button>
+      <button class="hbtn" id="shareBtn" type="button" title="複製唯讀分享連結">🔗 分享</button>
     </div>
   </div>
 
@@ -74,7 +74,7 @@
     </div>
   </div>
 
-  <input type="file" id="importFile" accept="application/json" style="display:none">
+  <input type="file" id="importFile" accept=".json,.html,application/json,text/html" style="display:none">
 </div>
 <div id="toast"></div>
 
@@ -103,7 +103,7 @@
         </ul>
       </div>
     </div>
-    <p class="help-foot">編輯會自動暫存在這台瀏覽器；按「💾 存檔」存成 JSON 長期保存，或「🔗 分享連結」把唯讀畫面傳給隊友。</p>
+    <p class="help-foot">編輯會自動暫存在這台瀏覽器；按「💾 存檔」存成一個可直接打開的檢視版 HTML（雙擊即看、方便傳給隊友），下次回到本站用「📂 讀取」載入同一個檔就能繼續編輯。也可按「🔗 分享」複製唯讀連結。</p>
   </div>
 </div>
 

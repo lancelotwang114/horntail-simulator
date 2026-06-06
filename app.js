@@ -478,13 +478,73 @@ async function saveToFile(){
     dirty=false; showToast('已存檔（覆蓋）');
   }catch(e){ if(e&&e.name==='AbortError') return; exportJSON(); }
 }
+function loadBoardObj(o){ if(!o) return false;
+  if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); }
+  if(Array.isArray(o.GLOBAL_ZONES)){ GLOBAL_ZONES.length=0; o.GLOBAL_ZONES.forEach(z=>GLOBAL_ZONES.push(z)); }
+  migrate(); clearRoles(); rebuildSteps(); cur=Math.max(0,Math.min(cur,STAGES.length-1)); sel=null; render(cur); renderEditor(); return true; }
 document.getElementById('importFile').onchange=ev=>{ const f=ev.target.files[0]; if(!f) return;
-  const rd=new FileReader(); rd.onload=()=>{ try{ const o=JSON.parse(rd.result);
-    if(Array.isArray(o.STAGES)){ STAGES.length=0; o.STAGES.forEach(s=>STAGES.push(s)); }
-    if(Array.isArray(o.GLOBAL_ZONES)){ GLOBAL_ZONES.length=0; o.GLOBAL_ZONES.forEach(z=>GLOBAL_ZONES.push(z)); }
-    migrate(); clearRoles(); rebuildSteps(); cur=Math.max(0,Math.min(cur,STAGES.length-1)); sel=null; render(cur); renderEditor(); showToast('已匯入 JSON');
-  }catch(err){ alert('JSON 解析失敗：'+err.message); } };
+  const rd=new FileReader(); rd.onload=()=>{ const txt=String(rd.result||''); let o=null;
+    try{ o=JSON.parse(txt); }
+    catch(e){ const m=txt.match(/<script[^>]*id=["']board-data["'][^>]*>([\s\S]*?)<\/script>/i); if(m){ try{ o=JSON.parse(m[1]); }catch(_){} } }
+    if(o && loadBoardObj(o)){ showToast('已讀取'); } else { alert('讀取失敗：這不是有效的戰術板檔（請選 .json，或本工具存出的 .html）'); }
+  };
   rd.readAsText(f); ev.target.value=''; };
+
+/* ---------- 存成「檢視版 HTML」：自含圖片，雙擊即看；回網站可再讀取續編 ---------- */
+function loadImg(src){ return new Promise((res,rej)=>{ const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res(im); im.onerror=()=>rej(new Error('img')); im.src=src; }); }
+async function imgToData(src,maxW,q){ const im=await loadImg(src); let w=im.naturalWidth||maxW||64, h=im.naturalHeight||w;
+  if(maxW&&w>maxW){ h=Math.round(h*maxW/w); w=maxW; }
+  const c=document.createElement('canvas'); c.width=w; c.height=h; c.getContext('2d').drawImage(im,0,0,w,h); return c.toDataURL('image/jpeg',q||0.82); }
+async function bakeImages(){ const map=await imgToData('assets/map.jpg',1280,0.72);
+  const jobs={}; for(const k in ROLES){ try{ jobs[k]=await imgToData(ROLES[k].f,96,0.85); }catch(e){ jobs[k]=''; } } return {map,jobs}; }
+function buildViewHTML(board,imgs){
+  const names={}; for(const k in ROLES) names[k]=ROLES[k].n;
+  const dataJSON=JSON.stringify(board).replace(/<\//g,'<\\/');
+  const css="*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,'Microsoft JhengHei','PingFang TC',sans-serif;background:linear-gradient(180deg,#081320,#0e2138);color:#e6f1ff;min-height:100vh;padding:16px}.vwrap{max-width:1180px;margin:0 auto}.vhd{display:flex;align-items:center;gap:8px;padding:2px 2px 12px}.vti{font-weight:900;font-size:20px;color:#7dd3fc}.vti .vv{font-size:.58em;opacity:.6;font-weight:700}.vmn{display:flex;gap:14px;align-items:stretch}.vac{flex:1 1 auto;min-width:0}@media(max-width:780px){.vmn{flex-direction:column}}"
+    +".ar{position:relative;width:100%;aspect-ratio:1661/1077;border-radius:14px;overflow:hidden;border:2px solid #1e3a5f;background:#0b1320}.ar .mp{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.wm{position:absolute;right:7px;bottom:6px;z-index:9;font-size:11px;font-weight:700;color:rgba(255,255,255,.55);text-shadow:0 1px 2px #000}"
+    +".ro{position:absolute;transform:translate(-50%,-50%);z-index:8;text-align:center;transition:left .9s cubic-bezier(.5,.05,.3,1),top .9s cubic-bezier(.5,.05,.3,1)}.av{width:38px;height:38px;border-radius:8px;overflow:hidden;border:2px solid #fff;box-shadow:0 2px 7px #000b}.av img{width:100%;height:100%;object-fit:cover;display:block}.nn{font-size:10px;font-weight:800;color:#fff;text-shadow:0 1px 2px #000,0 0 4px #000}.lb{font-size:9px;font-weight:800;color:#fde047;text-shadow:0 1px 2px #000}"
+    +".mk{position:absolute;transform:translate(-50%,-50%);aspect-ratio:1;z-index:5}.mk.O{border:4px solid #fde047;border-radius:50%;box-shadow:0 0 14px 2px #fde04766}.mk.X svg{width:100%;height:100%}.mk.X line{stroke:#ff5a4f;stroke-width:2.2;stroke-linecap:round}.mk .on{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#fde047;font-weight:900;text-shadow:0 1px 3px #000}"
+    +".zo{position:absolute;transform:translate(-50%,-50%);border-radius:10px;z-index:3;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;font-size:11px;font-weight:800}.zo.green{background:#22c55e2e;border:2px dashed #22c55e}.zo.red{background:#ef44442e;border:2px dashed #ef4444}.zo.smoke{background:#12141bb0;border:2px dashed #475569;z-index:4}.zo span{color:#fff;text-shadow:0 1px 2px #000,0 0 3px #000;background:rgba(0,0,0,.34);padding:1px 6px;border-radius:5px}"
+    +".tx{position:absolute;transform:translate(-50%,-50%);color:#fff;font-weight:800;text-shadow:0 1px 2px #000,0 0 5px #000;white-space:nowrap;z-index:7;text-align:center}"
+    +".zt{display:flex;gap:8px;justify-content:center;margin:8px 0}.zt button{background:#13314f;color:#cfe8ff;border:1px solid #335f8c;border-radius:8px;padding:5px 12px;font-weight:700;cursor:pointer;opacity:.5}.zt button.on{opacity:1}"
+    +".ct{display:flex;gap:8px;align-items:center;justify-content:center;margin:8px 0;flex-wrap:wrap}.ct button{background:#13314f;color:#cfe8ff;border:1px solid #335f8c;border-radius:9px;padding:8px 14px;font-weight:700;cursor:pointer}.st{display:flex;gap:7px;flex-wrap:wrap}.dt{width:14px;height:14px;border-radius:50%;background:#33597f;color:#0a1626;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer}.dt.on{background:#38bdf8;box-shadow:0 0 8px #38bdf8}"
+    +".pn{flex:0 0 300px;background:#10243b;border:1px solid #1f3b5c;border-radius:12px;padding:14px 16px;overflow:auto}@media(max-width:780px){.pn{flex:1 1 auto}}.pt{font-size:18px;font-weight:800;color:#e8eef6;margin-bottom:8px}.pl{list-style:none}.pl li{font-size:14px;line-height:1.7;padding-left:18px;position:relative;color:#dbeafe}.pl li:before{content:'\\203A';position:absolute;left:2px;color:#38bdf8;font-weight:900}.pl li.warn:before{content:'!';color:#fca5a5}.pl li.safe:before{content:'\\2713';color:#86efac}";
+  const js="var B=JSON.parse(document.getElementById('board-data').textContent);var S=B.STAGES||[],GZ=B.GLOBAL_ZONES||[];var cur=0,zr=true,zg=true;var ar=document.getElementById('ar');"
+    +"function rp(v){if(Array.isArray(v)&&v.length&&Array.isArray(v[0]))return v;if(Array.isArray(v)&&typeof v[0]==='number')return[v];return[];}"
+    +"function rd(i){[].slice.call(ar.querySelectorAll('.ro,.mk,.zo,.tx')).forEach(function(e){e.remove();});var st=S[i];"
+    +"for(var k in st.pos){if(!NM[k])continue;rp(st.pos[k]).forEach(function(p){var d=document.createElement('div');d.className='ro';d.style.left=p[0]+'%';d.style.top=p[1]+'%';d.innerHTML='<div class=\"av\"><img src=\"'+(IMG[k]||'')+'\"></div><div class=\"nn\">'+NM[k]+'</div>'+(p[2]?'<div class=\"lb\">'+p[2]+'</div>':'');ar.appendChild(d);});}"
+    +"(st.marks||[]).forEach(function(m){var d=document.createElement('div');d.className='mk '+m.kind;d.style.left=m.x+'%';d.style.top=m.y+'%';d.style.width=(m.r*2)+'%';if(m.kind==='X')d.innerHTML='<svg viewBox=\"0 0 10 10\"><line x1=\"1.6\" y1=\"1.6\" x2=\"8.4\" y2=\"8.4\"/><line x1=\"8.4\" y1=\"1.6\" x2=\"1.6\" y2=\"8.4\"/></svg>';if(m.label){var s=document.createElement('span');s.className='on';s.textContent=m.label;s.style.fontSize=((ar.clientWidth||700)*(m.r*2/100)*0.55)+'px';d.appendChild(s);}ar.appendChild(d);});"
+    +"(st.zones||[]).forEach(function(z){var d=document.createElement('div');d.className='zo '+z.kind;d.style.left=z.x+'%';d.style.top=z.y+'%';d.style.width=z.w+'%';d.style.height=z.h+'%';d.innerHTML=(z.kind==='smoke'&&!z.t)?'<span>\\uD83D\\uDCA8</span>':'<span>'+(z.t||'')+'</span>';ar.appendChild(d);});"
+    +"GZ.forEach(function(z){if(z.kind==='red'&&!zr)return;if(z.kind==='green'&&!zg)return;var d=document.createElement('div');d.className='zo '+z.kind;d.style.left=z.x+'%';d.style.top=z.y+'%';d.style.width=z.w+'%';d.style.height=z.h+'%';d.innerHTML='<span>'+(z.t||'')+'</span>';ar.appendChild(d);});"
+    +"(st.texts||[]).forEach(function(t){var d=document.createElement('div');d.className='tx';d.style.left=t.x+'%';d.style.top=t.y+'%';d.style.fontSize=(t.size||16)+'px';d.style.color=t.color||'#fff';d.textContent=t.t||'';ar.appendChild(d);});"
+    +"document.getElementById('pnm').textContent=st.name||'';var ul=document.getElementById('pl');ul.innerHTML='';(st.notes||[]).forEach(function(n){var li=document.createElement('li');if(n[0])li.className=n[0];li.textContent=n[1];ul.appendChild(li);});"
+    +"[].slice.call(document.getElementById('st').children).forEach(function(d,j){d.classList.toggle('on',j===i);});}"
+    +"function go(i){cur=Math.max(0,Math.min(S.length-1,i));rd(cur);}"
+    +"S.forEach(function(s,i){var d=document.createElement('div');d.className='dt';d.textContent=i;d.title=s.name;d.onclick=function(){go(i);};document.getElementById('st').appendChild(d);});"
+    +"document.getElementById('nx').onclick=function(){go(cur+1);};document.getElementById('pv').onclick=function(){go(cur-1);};"
+    +"document.getElementById('tr').onclick=function(){zr=!zr;this.classList.toggle('on',zr);rd(cur);};document.getElementById('tg').onclick=function(){zg=!zg;this.classList.toggle('on',zg);rd(cur);};"
+    +"document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')go(cur+1);else if(e.key==='ArrowLeft')go(cur-1);});go(0);";
+  return '<!DOCTYPE html><html lang="zh-TW"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>闇黑龍王 戰術板（檢視）</title><style>'+css+'</style></head><body>'
+    +'<div class="vwrap"><div class="vhd"><span style="font-size:22px">🐲</span><div class="vti">闇黑龍王 戰術板 <span class="vv">檢視版</span></div></div>'
+    +'<div class="vmn"><div class="vac"><div class="ar" id="ar"><img class="mp" src="'+imgs.map+'" alt="map" draggable="false"><div class="wm">作者：Artale繁中服-爸爸</div></div>'
+    +'<div class="zt"><button id="tr" class="on">危險區</button><button id="tg" class="on">安全區</button></div>'
+    +'<div class="ct"><button id="pv">◀ 上一階段</button><div class="st" id="st"></div><button id="nx">下一階段 ▶</button></div></div>'
+    +'<div class="pn"><div class="pt"><span id="pnm"></span></div><ul class="pl" id="pl"></ul></div></div></div>'
+    +'<script id="board-data" type="application/json">'+dataJSON+'<\/script>'
+    +'<script>var IMG='+JSON.stringify(imgs.jobs)+',NM='+JSON.stringify(names)+';'+js+'<\/script></body></html>';
+}
+let htmlHandle=null;
+async function saveAsHTML(){
+  showToast('產生檔案中…');
+  let imgs; try{ imgs=await bakeImages(); }catch(e){ alert('產生圖片失敗：本機 file:// 直接開會受瀏覽器限制，請在線上版（網址）操作。'); return; }
+  const html=buildViewHTML({version:1,STAGES,GLOBAL_ZONES}, imgs); const fname='闇黑龍王戰術板.html';
+  try{ if(window.showSaveFilePicker){
+      if(!htmlHandle){ htmlHandle=await window.showSaveFilePicker({suggestedName:fname,types:[{description:'HTML',accept:{'text/html':['.html']}}]}); }
+      const w=await htmlHandle.createWritable(); await w.write(html); await w.close(); dirty=false; showToast('已存檔（檢視版 HTML）'); return;
+  } }catch(e){ if(e&&e.name==='AbortError') return; }
+  const blob=new Blob([html],{type:'text/html'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); dirty=false; showToast('已下載檢視版 HTML');
+}
 function b64enc(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64dec(b){ return decodeURIComponent(escape(atob(b))); }
 function bytesToB64url(bytes){ let bin=''; for(let i=0;i<bytes.length;i++) bin+=String.fromCharCode(bytes[i]); return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
@@ -581,7 +641,7 @@ document.getElementById('pngAllBtn').onclick=exportAllPNG;
   gb.onclick=()=>{ zoneVis.green=!zoneVis.green; sync(); render(cur); };
   sync();
 })();
-document.getElementById('saveBtn').onclick=saveToFile;
+document.getElementById('saveBtn').onclick=saveAsHTML;
 document.getElementById('loadBtn').onclick=()=>document.getElementById('importFile').click();
 window.addEventListener('beforeunload',e=>{ if(dirty){ e.preventDefault(); e.returnValue=''; } });
 arena.addEventListener('pointerdown',e=>{ if(editMode && (e.target===arena||e.target.classList.contains('map')) && sel){ sel=null; refreshSel(); } });
@@ -605,9 +665,9 @@ function updateEmptyHint(){
       document.head.appendChild(s); }
     if(!emptyHintEl){ emptyHintEl=document.createElement('div'); emptyHintEl.className='empty-hint';
       const card=document.createElement('div'); card.className='eh-card';
-      card.innerHTML='<div class="eh-t">這是空白範本</div><div class="eh-s">讀取現成的 JSON，或進編輯模式開始排自己的走位</div>';
+      card.innerHTML='<div class="eh-t">這是空白範本</div><div class="eh-s">讀取現成的檔案，或進編輯模式開始排自己的走位</div>';
       const bs=document.createElement('div'); bs.className='eh-btns';
-      const b1=document.createElement('button'); b1.type='button'; b1.className='eh-b primary'; b1.textContent='📂 讀取 JSON'; b1.onclick=()=>document.getElementById('importFile').click();
+      const b1=document.createElement('button'); b1.type='button'; b1.className='eh-b primary'; b1.textContent='📂 讀取檔案'; b1.onclick=()=>document.getElementById('importFile').click();
       const b2=document.createElement('button'); b2.type='button'; b2.className='eh-b'; b2.textContent='✏ 開始建立'; b2.onclick=()=>setEdit(true);
       bs.append(b1,b2); card.appendChild(bs); emptyHintEl.appendChild(card); arena.appendChild(emptyHintEl);
     }
