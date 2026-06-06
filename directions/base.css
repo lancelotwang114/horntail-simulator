@@ -1,0 +1,86 @@
+/* ===== base：三方向共用的版面與幾何（顏色/字體/邊框由各 skin 覆蓋） ===== */
+.screen{ width:1120px; padding:24px; box-sizing:border-box; position:relative;
+  display:flex; flex-direction:column; gap:14px; }
+.screen *{ box-sizing:border-box; }
+
+/* header */
+.hdr{ display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.brand-ico{ font-size:30px; line-height:1; }
+.title{ font-size:24px; font-weight:900; letter-spacing:.5px; white-space:nowrap; }
+.sub{ font-size:12.5px; margin-top:2px; }
+.hdr-actions{ display:flex; gap:8px; }
+.hbtn{ font:inherit; font-size:13px; font-weight:700; padding:7px 14px; border-radius:8px; cursor:pointer; border:1px solid transparent; }
+
+/* rule banner */
+.rule{ font-size:13.5px; font-weight:700; padding:9px 16px; border-radius:10px; text-align:center; }
+.rule b{ font-weight:900; }
+
+/* main split */
+.main{ display:flex; gap:18px; align-items:stretch; }
+.arena-col{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:8px; }
+.panel{ flex:0 0 320px; border-radius:14px; padding:16px 18px; display:flex; flex-direction:column; }
+
+/* arena */
+.arena{ position:relative; width:100%; aspect-ratio:1661/1077; border-radius:14px; overflow:hidden; }
+.arena .map{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.wm{ position:absolute; right:8px; bottom:7px; z-index:9; font-size:10.5px; font-weight:700;
+  color:rgba(255,255,255,.6); text-shadow:0 1px 2px #000,0 0 3px #000; pointer-events:none; letter-spacing:.3px; }
+
+/* roles */
+.role{ position:absolute; transform:translate(-50%,-50%); z-index:8; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:1px; pointer-events:none; }
+.role-av{ position:relative; }
+.role-av img{ display:block; width:40px; height:40px; border-radius:9px; }
+.role .nm{ font-size:11px; font-weight:800; line-height:1.1; white-space:nowrap;
+  text-shadow:0 1px 2px #000,0 0 4px #000; }
+.role .lbl{ font-size:9.5px; font-weight:800; line-height:1.1; white-space:nowrap;
+  text-shadow:0 1px 2px #000,0 0 4px #000; }
+
+/* marks */
+.mark{ position:absolute; transform:translate(-50%,-50%); aspect-ratio:1; z-index:5;
+  display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.mark.O{ border-radius:50%; }
+.mark .onum{ font-size:12px; font-weight:900; white-space:nowrap;
+  text-shadow:0 1px 3px #000,0 0 5px #000; }
+.mark.X .xmark{ width:100%; height:100%; display:block; filter:drop-shadow(0 2px 2px #000); }
+.mark.X .xmark line{ stroke-width:2.2; stroke-linecap:round; }
+
+/* zones */
+.zone{ position:absolute; transform:translate(-50%,-50%); border-radius:10px; z-index:3;
+  display:flex; align-items:flex-start; justify-content:center; padding-top:4px; }
+.zone.smoke{ z-index:4; }
+.zone span{ font-size:11px; font-weight:800; padding:1px 7px; border-radius:5px;
+  color:#fff; text-shadow:0 1px 2px #000; background:rgba(0,0,0,.35); }
+
+/* legend */
+.legend{ display:flex; flex-wrap:wrap; gap:6px 14px; justify-content:center; font-size:12px; font-weight:700; }
+.lg{ display:inline-flex; align-items:center; gap:4px; }
+
+/* panel */
+.ptitle{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+.pt-name{ font-size:18px; font-weight:900; }
+.tag{ font-size:12px; font-weight:800; padding:3px 11px; border-radius:999px; white-space:nowrap; }
+.plist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.plist li{ font-size:14px; line-height:1.46; padding-left:20px; position:relative; }
+.plist li::before{ content:"›"; position:absolute; left:4px; top:0; font-weight:900; }
+.plist li.warn, .plist li.safe{ padding:5px 10px 5px 28px; border-radius:0 7px 7px 0; }
+.plist li.warn{ background:rgba(232,90,79,.12); border-left:3px solid #e8645c; }
+.plist li.safe{ background:rgba(95,184,120,.12); border-left:3px solid #5fb878; }
+.plist li.warn::before{ content:"!"; left:11px; top:5px; }
+.plist li.safe::before{ content:"✓"; left:10px; top:5px; }
+
+/* phase rail inside panel */
+.phase-rail{ margin-top:auto; padding-top:16px; display:flex; flex-direction:column; gap:3px; }
+.pr-item{ display:flex; align-items:center; gap:9px; font-size:12px; font-weight:700; padding:4px 8px; border-radius:7px; opacity:.5; }
+.pr-item.done{ opacity:.75; }
+.pr-item.on{ opacity:1; }
+.pr-n{ width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:900; flex:0 0 auto; }
+
+/* controls */
+.ctrl{ display:flex; align-items:center; justify-content:center; gap:14px; margin-top:2px; }
+.cbtn{ font:inherit; font-size:14px; font-weight:800; padding:10px 22px; border-radius:10px; cursor:pointer; border:1px solid transparent; }
+.steps{ display:flex; gap:7px; }
+.dot{ width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:900; cursor:pointer; }

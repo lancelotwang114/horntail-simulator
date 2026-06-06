@@ -1,0 +1,98 @@
+/* ===== Skin B — 楓之谷遊戲內視窗 UI ===== */
+.skin-b{
+  --b-wood:#6a3e16; --b-wood2:#8a5a2a; --b-cream:#f6e9cc; --b-cream2:#efe0bd;
+  --b-blue:#3f7fc4; --b-blue2:#2f63a0; --b-orange:#ff9a2e; --b-orange2:#f07c14;
+  --b-ink:#5a3410;
+  --ed-accent:#ff9a2e; --ed-soft:rgba(255,154,46,.20); --ed-ink:#3a1d04;
+  background:
+    radial-gradient(120% 90% at 50% 0%, #d8efff 0%, #a9d6f0 50%, #7fbfe6 100%);
+  color:var(--b-ink);
+  font-family:"Noto Sans TC",system-ui,sans-serif;
+  padding:0; gap:0;
+  border:3px solid var(--b-wood); border-radius:18px; overflow:hidden;
+  box-shadow:0 18px 40px rgba(20,40,70,.35), inset 0 0 0 2px #c9a35e;
+}
+.skin-b > *{ margin:0 24px; }
+.skin-b .rule{ margin-top:14px; }
+.skin-b .main{ margin-top:14px; }
+.skin-b .ctrl{ margin-top:14px; margin-bottom:22px; }
+
+/* 標題列 = Maple 藍色 title bar（滿版） */
+.skin-b .hdr{ margin:0; padding:14px 22px;
+  background:linear-gradient(180deg,#5a9bd4,#3f7fc4 60%,#34699f);
+  border-bottom:3px solid var(--b-wood);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.skin-b .title{ color:#fff; font-weight:900; font-size:25px;
+  text-shadow:0 2px 0 #1f4a78, 0 0 6px rgba(0,0,0,.25); letter-spacing:1px; }
+.skin-b .sub{ color:#e3f1ff; text-shadow:0 1px 1px #2b5784; }
+.skin-b .brand-ico{ filter:drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+.skin-b .hbtn{ color:#fff; font-weight:900; border:2px solid #b85e10;
+  background:linear-gradient(180deg,var(--b-orange),var(--b-orange2));
+  box-shadow:0 2px 0 #b85e10, inset 0 1px 0 rgba(255,255,255,.4); text-shadow:0 1px 1px rgba(0,0,0,.25); }
+.skin-b .hbtn:active{ transform:translateY(1px); box-shadow:0 1px 0 #b85e10; }
+
+.skin-b .rule{ background:linear-gradient(180deg,#ffe1c4,#ffd0a8);
+  border:2px solid #d2762a; border-radius:12px; color:#8a3410;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6); }
+.skin-b .rule b{ color:#c0341c; }
+
+/* arena = 木框視窗 */
+.skin-b .arena{ border:4px solid var(--b-wood); border-radius:10px;
+  box-shadow:inset 0 0 0 2px #c9a35e, inset 0 0 40px rgba(0,0,0,.45), 0 6px 16px rgba(40,20,0,.35); }
+
+/* 角色 = 道具格 + 米色名牌 */
+.skin-b .role-av{ padding:2px; background:linear-gradient(180deg,#fff6df,#e7d3a6);
+  border:2px solid var(--b-wood); border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,.45); }
+.skin-b .role-av img{ width:38px; height:38px; border-radius:5px; }
+.skin-b .role .nm{ color:var(--b-ink); text-shadow:none; margin-top:2px;
+  background:rgba(246,233,204,.95); border:1.5px solid #c79b54; border-radius:999px;
+  padding:1px 8px; box-shadow:0 1px 2px rgba(0,0,0,.3); }
+.skin-b .role .lbl{ color:#fff; background:var(--b-orange2); border-radius:999px;
+  padding:0 7px; margin-top:1px; text-shadow:0 1px 1px rgba(0,0,0,.3); }
+
+.skin-b .mark.O{ border:4px solid #ffb52e;
+  box-shadow:0 0 18px 3px rgba(255,160,30,.6), inset 0 0 12px rgba(255,180,40,.45);
+  animation:b-pulse 1.4s ease-in-out infinite; }
+@keyframes b-pulse{ 0%,100%{opacity:.78} 50%{opacity:1} }
+.skin-b .mark .onum{ color:#fff; background:rgba(240,124,20,.92); border-radius:999px; padding:0 6px;
+  text-shadow:0 1px 1px rgba(0,0,0,.4); }
+.skin-b .mark.X .xmark line{ stroke:#e23b2e; }
+
+.skin-b .zone.green{ background:rgba(64,190,90,.2); border:2px solid #3fae54; }
+.skin-b .zone.green span{ color:#eafff0; background:rgba(34,120,52,.7); }
+.skin-b .zone.red{ background:rgba(232,70,50,.18); border:2px solid #e2553a; }
+.skin-b .zone.red span{ color:#fff1ee; background:rgba(150,40,24,.7); }
+.skin-b .zone.smoke{ background:rgba(60,60,70,.5); border:2px dashed #d9c79c; }
+
+.skin-b .legend{ color:#5a3410; font-weight:800;
+  background:rgba(246,233,204,.7); border:1.5px solid #c9a35e; border-radius:10px; padding:6px 10px; }
+.skin-b .lg-o{ color:#d2762a; } .skin-b .lg-x{ color:#c0341c; }
+.skin-b .lg-r{ color:#c0431c; } .skin-b .lg-g{ color:#2c8b3f; } .skin-b .lg-s{ color:#7a5a2a; }
+
+/* 面板 = 米色內視窗 */
+.skin-b .panel{ background:linear-gradient(180deg,#f8eccf,#efe0bd);
+  border:2px solid #c9a35e; border-radius:12px;
+  box-shadow:inset 0 0 0 2px #fff6df, 0 4px 10px rgba(40,20,0,.2); }
+.skin-b .pt-name{ color:#5a3410; font-size:18px; }
+.skin-b .tag{ background:linear-gradient(180deg,#5a9bd4,#3f7fc4); color:#fff; border:1.5px solid #2f63a0;
+  text-shadow:0 1px 1px rgba(0,0,0,.3); }
+.skin-b .plist li{ color:#5a3410; }
+.skin-b .plist li::before{ color:#d2762a; }
+.skin-b .plist li.warn{ color:#a8341c; } .skin-b .plist li.warn::before{ color:#c0341c; }
+.skin-b .plist li.safe{ color:#2c7a3c; } .skin-b .plist li.safe::before{ color:#2c8b3f; }
+
+.skin-b .phase-rail{ border-top:2px dashed #cbab6e; }
+.skin-b .pr-item{ color:#6a4518; }
+.skin-b .pr-n{ background:#e3cf9c; color:#6a4518; border:1px solid #c9a35e; }
+.skin-b .pr-item.done .pr-n{ background:#bfe0c4; color:#2c6a3a; }
+.skin-b .pr-item.on{ background:rgba(255,154,46,.18); }
+.skin-b .pr-item.on .pr-n{ background:var(--b-orange); color:#fff; border-color:#c4660f; }
+
+.skin-b .cbtn{ color:#5a3410; font-weight:900; border:2px solid #c4912e;
+  background:linear-gradient(180deg,#ffe7a8,#f5cf72); box-shadow:0 2px 0 #c4912e, inset 0 1px 0 rgba(255,255,255,.6); }
+.skin-b .cbtn:active{ transform:translateY(1px); box-shadow:0 1px 0 #c4912e; }
+.skin-b .cbtn.next{ color:#fff; border-color:#b85e10;
+  background:linear-gradient(180deg,var(--b-orange),var(--b-orange2)); box-shadow:0 3px 0 #b85e10, inset 0 1px 0 rgba(255,255,255,.4);
+  text-shadow:0 1px 1px rgba(0,0,0,.25); }
+.skin-b .dot{ background:#e3cf9c; color:#7a5320; border:1.5px solid #c9a35e; }
+.skin-b .dot.on{ background:var(--b-orange); color:#fff; border-color:#c4660f; box-shadow:0 0 8px rgba(255,154,46,.7); }

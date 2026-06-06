@@ -1,0 +1,70 @@
+/* ===== Skin A — 精緻深藍戰術 HUD ===== */
+.skin-a{
+  --a-cyan:#5fd0ff; --a-cyan2:#9ee6ff; --a-amber:#ffc83d;
+  --ed-accent:#5fd0ff; --ed-soft:rgba(95,208,255,.16); --ed-ink:#04293f;
+  background:
+    radial-gradient(120% 80% at 50% -10%, #163152 0%, rgba(22,49,82,0) 55%),
+    linear-gradient(180deg,#0a1626,#0c1d33 60%,#0a1626);
+  color:#e6f1ff;
+  font-family:"Noto Sans TC",system-ui,sans-serif;
+  border:1px solid #1d3a5f;
+}
+.skin-a .title{ font-family:"Rajdhani",sans-serif; font-weight:700; font-size:27px;
+  color:#eaf6ff; text-shadow:0 0 18px rgba(95,208,255,.35); letter-spacing:1px; }
+.skin-a .sub{ color:#8fb0cf; }
+.skin-a .brand-ico{ filter:drop-shadow(0 0 8px rgba(95,208,255,.5)); }
+.skin-a .hbtn{ background:rgba(95,208,255,.08); border:1px solid #2c537c; color:#bfe4ff; }
+.skin-a .hbtn:hover{ background:rgba(95,208,255,.16); }
+
+.skin-a .rule{ background:linear-gradient(90deg,rgba(232,90,79,.22),rgba(232,90,79,.06));
+  border:1px solid rgba(248,113,113,.45); border-left:4px solid #f0556e; color:#ffd9d4;
+  text-align:left; }
+.skin-a .rule b{ color:#ffb4ab; }
+
+.skin-a .arena{ border:1px solid #2c537c;
+  box-shadow:inset 0 0 60px rgba(0,0,0,.6), 0 10px 34px rgba(0,0,0,.5), 0 0 0 4px rgba(95,208,255,.06); }
+
+.skin-a .role-av img{ width:42px; height:42px; border:2px solid var(--a-cyan);
+  box-shadow:0 0 0 2px rgba(10,22,38,.85), 0 0 12px rgba(95,208,255,.5), 0 3px 8px rgba(0,0,0,.6); }
+.skin-a .role .nm{ color:#eaf6ff; }
+.skin-a .role .lbl{ color:var(--a-amber); }
+
+.skin-a .mark.O{ border:3.5px solid var(--a-amber);
+  box-shadow:0 0 22px 4px rgba(255,200,61,.5), inset 0 0 14px rgba(255,200,61,.4);
+  animation:a-pulse 1.4s ease-in-out infinite; }
+@keyframes a-pulse{ 0%,100%{opacity:.7; transform:translate(-50%,-50%) scale(.97)} 50%{opacity:1; transform:translate(-50%,-50%) scale(1.03)} }
+.skin-a .mark .onum{ color:var(--a-amber); }
+.skin-a .mark.X .xmark line{ stroke:#ff5a4f; }
+
+.skin-a .zone.green{ background:rgba(34,197,94,.16); border:2px dashed #34d27a; }
+.skin-a .zone.green span{ color:#bbf7d0; }
+.skin-a .zone.red{ background:rgba(239,68,68,.15); border:2px dashed #ef6a6a; }
+.skin-a .zone.red span{ color:#fecaca; }
+.skin-a .zone.smoke{ background:rgba(15,20,30,.6); border:2px dashed #7c93ab; }
+
+.skin-a .legend{ color:#9fb6cf; }
+.skin-a .lg-o{ color:var(--a-amber); } .skin-a .lg-x{ color:#ff7a70; }
+.skin-a .lg-r{ color:#ef8a8a; } .skin-a .lg-g{ color:#86efac; } .skin-a .lg-s{ color:#aebfd0; }
+
+.skin-a .panel{ background:rgba(13,31,51,.72); border:1px solid #234767; backdrop-filter:blur(6px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 8px 24px rgba(0,0,0,.4); }
+.skin-a .pt-name{ font-family:"Rajdhani",sans-serif; color:#eaf6ff; font-size:20px; }
+.skin-a .tag{ background:rgba(95,208,255,.16); color:var(--a-cyan2); border:1px solid #2c537c; }
+.skin-a .plist li{ color:#d4e6f7; }
+.skin-a .plist li::before{ color:var(--a-cyan); }
+.skin-a .plist li.warn{ color:#ffd9d4; } .skin-a .plist li.warn::before{ color:#ff8a7e; }
+.skin-a .plist li.safe{ color:#c7f5d6; } .skin-a .plist li.safe::before{ color:#5fb878; }
+
+.skin-a .phase-rail{ border-top:1px solid rgba(95,208,255,.14); }
+.skin-a .pr-item{ color:#bcd4ec; }
+.skin-a .pr-n{ background:#16314f; color:#9fc4e6; }
+.skin-a .pr-item.done .pr-n{ background:#1c4a3a; color:#7fe0b0; }
+.skin-a .pr-item.on{ background:rgba(95,208,255,.12); }
+.skin-a .pr-item.on .pr-n{ background:var(--a-cyan); color:#062337; }
+
+.skin-a .cbtn{ background:#143356; border:1px solid #2c537c; color:#cfe8ff; }
+.skin-a .cbtn:hover{ background:#1a4068; }
+.skin-a .cbtn.next{ background:linear-gradient(180deg,#5fd0ff,#36b6ec); border-color:#5fd0ff; color:#04293f;
+  box-shadow:0 4px 14px rgba(95,208,255,.4); }
+.skin-a .dot{ background:#1a3a5b; color:#7da6c9; }
+.skin-a .dot.on{ background:var(--a-cyan); color:#04293f; box-shadow:0 0 12px rgba(95,208,255,.7); }
