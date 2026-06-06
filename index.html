@@ -34,13 +34,19 @@
         <button data-skin="skin-c" type="button" title="寶典風">3</button>
       </div>
       <button class="hbtn ic" id="helpBtn" type="button" title="操作說明">？</button>
-      <button class="hbtn ic" id="pngBtn" type="button" title="複製這一階段圖片（貼到 LINE／Discord）">📋</button>
-      <button class="hbtn ic" id="pngAllBtn" type="button" title="複製全部階段（合成一張長圖）">🗂</button>
-      <button class="hbtn edit-only primary" id="saveBtn" type="button" title="存成檢視版 HTML（雙擊就能看；之後回來可再讀取續編）">💾 存檔</button>
-      <button class="hbtn edit-only" id="loadBtn" type="button" title="讀取檔案（.html 或 .json）繼續編輯">📂 讀取</button>
-      <button class="hbtn ic edit-only" id="undoBtn" type="button" title="復原 (Ctrl+Z)">↩︎</button>
-      <button class="hbtn ic edit-only" id="redoBtn" type="button" title="重做 (Ctrl+Shift+Z)">↪︎</button>
-      <button class="hbtn" id="shareBtn" type="button" title="複製唯讀分享連結">🔗 分享</button>
+      <span class="hgrp edit-only">
+        <button class="hbtn" id="undoBtn" type="button" title="復原上一步操作 (Ctrl+Z)">↩ 復原</button>
+        <button class="hbtn" id="redoBtn" type="button" title="重做 (Ctrl+Shift+Z)">↪ 重做</button>
+      </span>
+      <span class="hgrp edit-only">
+        <button class="hbtn" id="loadBtn" type="button" title="讀取檔案（.html 或 .json）繼續編輯">📂 讀取</button>
+        <button class="hbtn primary" id="saveBtn" type="button" title="存成檢視版 HTML（雙擊就能看；之後回來可再讀取續編）">💾 存檔</button>
+      </span>
+      <span class="hgrp">
+        <button class="hbtn" id="pngBtn" type="button" title="複製這一階段的圖片（貼到 LINE／Discord）">📷 複製圖</button>
+        <button class="hbtn" id="pngAllBtn" type="button" title="全部階段合成一張長圖複製">🗂 複製長圖</button>
+        <button class="hbtn" id="shareBtn" type="button" title="複製唯讀分享連結">🔗 分享</button>
+      </span>
     </div>
   </div>
 

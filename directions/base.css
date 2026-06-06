@@ -9,11 +9,17 @@
 .brand-ico{ font-size:30px; line-height:1; }
 .title{ font-size:24px; font-weight:900; letter-spacing:.5px; white-space:nowrap; }
 .sub{ font-size:12.5px; margin-top:2px; }
-.hdr-actions{ display:flex; gap:8px; }
+.hdr-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 .hbtn{ font:inherit; font-size:13px; font-weight:700; padding:7px 14px; border-radius:8px; cursor:pointer; border:1px solid transparent; }
 .hbtn.ic{ padding:7px 10px; font-size:15px; line-height:1; }
 .hbtn.edit-only{ display:none; }
 #app.edit .hbtn.edit-only{ display:inline-flex; align-items:center; }
+/* 頂部按鈕分組：細分隔線 */
+.hgrp{ display:flex; align-items:center; gap:6px; padding-left:10px; border-left:1px solid rgba(255,255,255,.18); }
+.hgrp.edit-only{ display:none; }
+#app.edit .hgrp.edit-only{ display:flex; }
+.hgrp .hbtn{ white-space:nowrap; }
+.hbtn:disabled{ opacity:.45; cursor:default; }
 /* 存檔：跨主題的醒目綠，引導非技術使用者 */
 .hbtn.primary{ background:linear-gradient(180deg,#34d399,#10b981)!important; border-color:#0e9f6e!important; color:#04231a!important; }
 .hbtn.primary:hover{ filter:brightness(1.07); }
