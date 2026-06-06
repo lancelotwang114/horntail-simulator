@@ -176,6 +176,7 @@ function render(i){
     it.innerHTML='<span class="pr-n">'+j+'</span><span class="pr-t">'+shortName(s.name)+'</span>';
     it.onclick=()=>go(j); railEl.appendChild(it); });
   [...stepsEl.children].forEach((d,j)=>d.classList.toggle('on',j===i));
+  updateEmptyHint();
 }
 function renderTitle(){ const st=STAGES[cur]; const el=document.getElementById('ptName');
   if(document.activeElement!==el) el.textContent=st.name;
@@ -593,6 +594,26 @@ try{ applySkin(localStorage.getItem('horntail_skin')||'skin-b'); }catch(e){ appl
   el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
   el.addEventListener('blur',()=>{ if(editMode) renderEditor(); });
 })();
+/* ---------- 空白範本引導 ---------- */
+function isBoardEmpty(){ return STAGES.every(s=> (!s.marks||!s.marks.length)&&(!s.zones||!s.zones.length)&&(!s.texts||!s.texts.length)&&Object.keys(s.pos||{}).length===0 ); }
+let emptyHintEl=null;
+function updateEmptyHint(){
+  const show = !readOnly && !editMode && isBoardEmpty();
+  if(show){
+    if(!document.getElementById('eh-style')){ const s=document.createElement('style'); s.id='eh-style';
+      s.textContent='.empty-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:12;background:rgba(8,12,20,.5)}.eh-card{background:#10243bee;border:1px solid #2c4a6b;border-radius:14px;padding:18px 22px;text-align:center;max-width:82%;box-shadow:0 8px 30px #000a}.eh-t{font-size:18px;font-weight:900;color:#e8eef6;margin-bottom:4px}.eh-s{font-size:13px;color:#9fb6cf;margin-bottom:14px}.eh-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.eh-b{padding:9px 16px;border-radius:10px;border:1px solid #335f8c;background:#16324d;color:#cfe8ff;font-weight:700;font-size:14px;cursor:pointer}.eh-b.primary{background:#38bdf8;border-color:#38bdf8;color:#04263b}.eh-b:hover{filter:brightness(1.12)}';
+      document.head.appendChild(s); }
+    if(!emptyHintEl){ emptyHintEl=document.createElement('div'); emptyHintEl.className='empty-hint';
+      const card=document.createElement('div'); card.className='eh-card';
+      card.innerHTML='<div class="eh-t">這是空白範本</div><div class="eh-s">讀取現成的 JSON，或進編輯模式開始排自己的走位</div>';
+      const bs=document.createElement('div'); bs.className='eh-btns';
+      const b1=document.createElement('button'); b1.type='button'; b1.className='eh-b primary'; b1.textContent='📂 讀取 JSON'; b1.onclick=()=>document.getElementById('importFile').click();
+      const b2=document.createElement('button'); b2.type='button'; b2.className='eh-b'; b2.textContent='✏ 開始建立'; b2.onclick=()=>setEdit(true);
+      bs.append(b1,b2); card.appendChild(bs); emptyHintEl.appendChild(card); arena.appendChild(emptyHintEl);
+    }
+    emptyHintEl.style.display='flex';
+  } else if(emptyHintEl){ emptyHintEl.style.display='none'; }
+}
 (async function boot(){
   const _hash=await resolveHash();
   if(_hash&&_hash.board&&Array.isArray(_hash.board.STAGES)){ applyBoard(_hash.board); readOnly=(_hash.mode==='view'); }

@@ -6,6 +6,8 @@ desktop.ini
 .idea/
 *.swp
 *~
+.__wtest
+.__*
 
 # ===== 除錯／截圖／暫存夾 =====
 _chk/
